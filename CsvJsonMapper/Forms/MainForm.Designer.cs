@@ -26,8 +26,11 @@
             this.leftPanelSplitContainer = new System.Windows.Forms.SplitContainer();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.tvSourceFiles = new System.Windows.Forms.TreeView();
-            this.groupBoxJsonStructure = new System.Windows.Forms.GroupBox();
+            this.groupBoxJsonTemplate = new System.Windows.Forms.GroupBox();
+            this.structurePreviewSplitter = new System.Windows.Forms.SplitContainer();
             this.tvJsonStructure = new System.Windows.Forms.TreeView();
+            this.groupBoxJsonStructurePreview = new System.Windows.Forms.GroupBox();
+            this.rtbJsonStructurePreview = new System.Windows.Forms.RichTextBox();
             this.mainTabControl = new System.Windows.Forms.TabControl();
             this.tabPageCsvPreview = new System.Windows.Forms.TabPage();
             this.groupBoxCsvViews = new System.Windows.Forms.GroupBox();
@@ -46,14 +49,19 @@
             this.leftPanelSplitContainer.Panel2.SuspendLayout();
             this.leftPanelSplitContainer.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            this.groupBoxJsonStructure.SuspendLayout();
+            this.groupBoxJsonTemplate.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.structurePreviewSplitter)).BeginInit();
+            this.structurePreviewSplitter.Panel1.SuspendLayout();
+            this.structurePreviewSplitter.Panel2.SuspendLayout();
+            this.structurePreviewSplitter.SuspendLayout();
+            this.groupBoxJsonStructurePreview.SuspendLayout();
             this.mainTabControl.SuspendLayout();
             this.tabPageCsvPreview.SuspendLayout();
             this.groupBoxCsvViews.SuspendLayout();
             this.tabPageJsonPreview.SuspendLayout();
             this.groupBoxJsonPreview.SuspendLayout();
             this.SuspendLayout();
-             
+            
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -61,7 +69,7 @@
             this.menuStrip1.Size = new System.Drawing.Size(1184, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
-           
+             
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openCsvToolStripMenuItem,
             this.toolStripSeparator1,
@@ -69,7 +77,7 @@
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(38, 20);
             this.fileToolStripMenuItem.Text = "Plik";
-          
+            
             this.openCsvToolStripMenuItem.Name = "openCsvToolStripMenuItem";
             this.openCsvToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openCsvToolStripMenuItem.Text = "Importuj pliki CSV...";
@@ -82,7 +90,7 @@
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "Zakończ";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
-            
+             
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.lblStatus});
             this.statusStrip1.Location = new System.Drawing.Point(0, 639);
@@ -90,34 +98,34 @@
             this.statusStrip1.Size = new System.Drawing.Size(1184, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
-           
+             
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(46, 17);
             this.lblStatus.Text = "Gotowy";
-           
+             
             this.mainSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainSplitContainer.Location = new System.Drawing.Point(0, 24);
             this.mainSplitContainer.Name = "mainSplitContainer";
-          
-            this.mainSplitContainer.Panel1.Controls.Add(this.leftPanelSplitContainer);
            
+            this.mainSplitContainer.Panel1.Controls.Add(this.leftPanelSplitContainer);
+            
             this.mainSplitContainer.Panel2.Controls.Add(this.mainTabControl);
             this.mainSplitContainer.Size = new System.Drawing.Size(1184, 615);
             this.mainSplitContainer.SplitterDistance = 450;
             this.mainSplitContainer.TabIndex = 2;
-           
+            
             this.leftPanelSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.leftPanelSplitContainer.Location = new System.Drawing.Point(0, 0);
             this.leftPanelSplitContainer.Name = "leftPanelSplitContainer";
             this.leftPanelSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
-           
-            this.leftPanelSplitContainer.Panel1.Controls.Add(this.groupBox1);
             
-            this.leftPanelSplitContainer.Panel2.Controls.Add(this.groupBoxJsonStructure);
+            this.leftPanelSplitContainer.Panel1.Controls.Add(this.groupBox1);
+           
+            this.leftPanelSplitContainer.Panel2.Controls.Add(this.groupBoxJsonTemplate);
             this.leftPanelSplitContainer.Size = new System.Drawing.Size(450, 615);
             this.leftPanelSplitContainer.SplitterDistance = 300;
             this.leftPanelSplitContainer.TabIndex = 0;
-           
+            
             this.groupBox1.Controls.Add(this.tvSourceFiles);
             this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupBox1.Location = new System.Drawing.Point(0, 0);
@@ -126,30 +134,62 @@
             this.groupBox1.Size = new System.Drawing.Size(450, 300);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Źródła danych (Pliki CSV)";
-            
+            this.groupBox1.Text = "Źródła danych CSV";
+           
             this.tvSourceFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tvSourceFiles.Location = new System.Drawing.Point(6, 19);
             this.tvSourceFiles.Name = "tvSourceFiles";
             this.tvSourceFiles.Size = new System.Drawing.Size(438, 275);
             this.tvSourceFiles.TabIndex = 0;
            
-            this.groupBoxJsonStructure.Controls.Add(this.tvJsonStructure);
-            this.groupBoxJsonStructure.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxJsonStructure.Location = new System.Drawing.Point(0, 0);
-            this.groupBoxJsonStructure.Name = "groupBoxJsonStructure";
-            this.groupBoxJsonStructure.Padding = new System.Windows.Forms.Padding(6);
-            this.groupBoxJsonStructure.Size = new System.Drawing.Size(450, 311);
-            this.groupBoxJsonStructure.TabIndex = 0;
-            this.groupBoxJsonStructure.TabStop = false;
-            this.groupBoxJsonStructure.Text = "Kreator struktury JSON";
-            
+            this.groupBoxJsonTemplate.Controls.Add(this.structurePreviewSplitter);
+            this.groupBoxJsonTemplate.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBoxJsonTemplate.Location = new System.Drawing.Point(0, 0);
+            this.groupBoxJsonTemplate.Name = "groupBoxJsonTemplate";
+            this.groupBoxJsonTemplate.Padding = new System.Windows.Forms.Padding(6);
+            this.groupBoxJsonTemplate.Size = new System.Drawing.Size(450, 311);
+            this.groupBoxJsonTemplate.TabIndex = 0;
+            this.groupBoxJsonTemplate.TabStop = false;
+            this.groupBoxJsonTemplate.Text = "Struktura JSON (Kreator)";
+           
+            this.structurePreviewSplitter.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.structurePreviewSplitter.Location = new System.Drawing.Point(6, 19);
+            this.structurePreviewSplitter.Name = "structurePreviewSplitter";
+            this.structurePreviewSplitter.Orientation = System.Windows.Forms.Orientation.Horizontal;
+          
+            this.structurePreviewSplitter.Panel1.Controls.Add(this.tvJsonStructure);
+           
+            this.structurePreviewSplitter.Panel2.Controls.Add(this.groupBoxJsonStructurePreview);
+            this.structurePreviewSplitter.Size = new System.Drawing.Size(438, 286);
+            this.structurePreviewSplitter.SplitterDistance = 140;
+            this.structurePreviewSplitter.TabIndex = 1;
+          
             this.tvJsonStructure.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tvJsonStructure.Location = new System.Drawing.Point(6, 19);
+            this.tvJsonStructure.Location = new System.Drawing.Point(0, 0);
             this.tvJsonStructure.Name = "tvJsonStructure";
-            this.tvJsonStructure.Size = new System.Drawing.Size(438, 286);
+            this.tvJsonStructure.Size = new System.Drawing.Size(438, 140);
             this.tvJsonStructure.TabIndex = 0;
-            
+           
+            this.groupBoxJsonStructurePreview.Controls.Add(this.rtbJsonStructurePreview);
+            this.groupBoxJsonStructurePreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBoxJsonStructurePreview.Location = new System.Drawing.Point(0, 0);
+            this.groupBoxJsonStructurePreview.Name = "groupBoxJsonStructurePreview";
+            this.groupBoxJsonStructurePreview.Padding = new System.Windows.Forms.Padding(6);
+            this.groupBoxJsonStructurePreview.Size = new System.Drawing.Size(438, 142);
+            this.groupBoxJsonStructurePreview.TabIndex = 0;
+            this.groupBoxJsonStructurePreview.TabStop = false;
+            this.groupBoxJsonStructurePreview.Text = "Podgląd Struktury JSON";
+          
+            this.rtbJsonStructurePreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rtbJsonStructurePreview.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.rtbJsonStructurePreview.Location = new System.Drawing.Point(6, 19);
+            this.rtbJsonStructurePreview.Name = "rtbJsonStructurePreview";
+            this.rtbJsonStructurePreview.ReadOnly = true;
+            this.rtbJsonStructurePreview.Size = new System.Drawing.Size(426, 117);
+            this.rtbJsonStructurePreview.TabIndex = 0;
+            this.rtbJsonStructurePreview.Text = "";
+            this.rtbJsonStructurePreview.WordWrap = false;
+           
             this.mainTabControl.Controls.Add(this.tabPageCsvPreview);
             this.mainTabControl.Controls.Add(this.tabPageJsonPreview);
             this.mainTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -165,7 +205,7 @@
             this.tabPageCsvPreview.Padding = new System.Windows.Forms.Padding(3);
             this.tabPageCsvPreview.Size = new System.Drawing.Size(722, 589);
             this.tabPageCsvPreview.TabIndex = 0;
-            this.tabPageCsvPreview.Text = "Podgląd CSV (Surowy)";
+            this.tabPageCsvPreview.Text = "Podgląd CSV";
             this.tabPageCsvPreview.UseVisualStyleBackColor = true;
             
             this.groupBoxCsvViews.Controls.Add(this.tabControlCsvViews);
@@ -177,21 +217,21 @@
             this.groupBoxCsvViews.TabIndex = 1;
             this.groupBoxCsvViews.TabStop = false;
             this.groupBoxCsvViews.Text = "Podgląd plików";
-            
+           
             this.tabControlCsvViews.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControlCsvViews.Location = new System.Drawing.Point(6, 19);
             this.tabControlCsvViews.Name = "tabControlCsvViews";
             this.tabControlCsvViews.SelectedIndex = 0;
             this.tabControlCsvViews.Size = new System.Drawing.Size(704, 558);
             this.tabControlCsvViews.TabIndex = 0;
-            
+           
             this.tabPageJsonPreview.Controls.Add(this.groupBoxJsonPreview);
             this.tabPageJsonPreview.Location = new System.Drawing.Point(4, 22);
             this.tabPageJsonPreview.Name = "tabPageJsonPreview";
             this.tabPageJsonPreview.Padding = new System.Windows.Forms.Padding(3);
             this.tabPageJsonPreview.Size = new System.Drawing.Size(722, 589);
             this.tabPageJsonPreview.TabIndex = 1;
-            this.tabPageJsonPreview.Text = "Podgląd JSON";
+            this.tabPageJsonPreview.Text = "Stworzony JSON";
             this.tabPageJsonPreview.UseVisualStyleBackColor = true;
            
             this.groupBoxJsonPreview.Controls.Add(this.rtbJsonPreview);
@@ -202,8 +242,8 @@
             this.groupBoxJsonPreview.Size = new System.Drawing.Size(716, 583);
             this.groupBoxJsonPreview.TabIndex = 0;
             this.groupBoxJsonPreview.TabStop = false;
-            this.groupBoxJsonPreview.Text = "Podgląd JSON (Przetworzony)";
-           
+            this.groupBoxJsonPreview.Text = "Stworzony JSON";
+            
             this.rtbJsonPreview.Dock = System.Windows.Forms.DockStyle.Fill;
             this.rtbJsonPreview.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.rtbJsonPreview.Location = new System.Drawing.Point(6, 19);
@@ -237,7 +277,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.leftPanelSplitContainer)).EndInit();
             this.leftPanelSplitContainer.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
-            this.groupBoxJsonStructure.ResumeLayout(false);
+            this.groupBoxJsonTemplate.ResumeLayout(false);
+            this.structurePreviewSplitter.Panel1.ResumeLayout(false);
+            this.structurePreviewSplitter.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.structurePreviewSplitter)).EndInit();
+            this.structurePreviewSplitter.ResumeLayout(false);
+            this.groupBoxJsonStructurePreview.ResumeLayout(false);
             this.mainTabControl.ResumeLayout(false);
             this.tabPageCsvPreview.ResumeLayout(false);
             this.groupBoxCsvViews.ResumeLayout(false);
@@ -259,8 +304,7 @@
         private System.Windows.Forms.SplitContainer leftPanelSplitContainer;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TreeView tvSourceFiles;
-        private System.Windows.Forms.GroupBox groupBoxJsonStructure;
-        private System.Windows.Forms.TreeView tvJsonStructure;
+        private System.Windows.Forms.GroupBox groupBoxJsonTemplate;
         private System.Windows.Forms.TabControl mainTabControl;
         private System.Windows.Forms.TabPage tabPageCsvPreview;
         private System.Windows.Forms.GroupBox groupBoxCsvViews;
@@ -268,5 +312,10 @@
         private System.Windows.Forms.TabPage tabPageJsonPreview;
         private System.Windows.Forms.GroupBox groupBoxJsonPreview;
         private System.Windows.Forms.RichTextBox rtbJsonPreview;
+        private System.Windows.Forms.TreeView tvJsonStructure;
+        private System.Windows.Forms.SplitContainer structurePreviewSplitter;
+        private System.Windows.Forms.GroupBox groupBoxJsonStructurePreview;
+        private System.Windows.Forms.RichTextBox rtbJsonStructurePreview;
     }
 }
+

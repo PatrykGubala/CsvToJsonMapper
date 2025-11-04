@@ -3,15 +3,13 @@ using CsvHelper.Configuration;
 using CsvJsonMapper.Models;
 using System.Data;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System;
-using System.Collections.Generic;
 
 namespace CsvJsonMapper.Services
 {
     public class CsvParsingService
     {
+        private const int PREVIEW_ROW_LIMIT = 50;
+
         public CsvSourceFile LoadRawCsv(string filePath)
         {
             var sourceFile = new CsvSourceFile { FilePath = filePath };
@@ -19,7 +17,7 @@ namespace CsvJsonMapper.Services
             sourceFile.Delimiter = DetectDelimiter(filePath);
             if (string.IsNullOrEmpty(sourceFile.Delimiter))
             {
-                throw new System.Exception($"Nie można automatycznie wykryć separatora dla pliku: {sourceFile.FileName}");
+                throw new Exception($"Nie można automatycznie wykryć separatora dla pliku: {sourceFile.FileName}");
             }
 
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -31,9 +29,36 @@ namespace CsvJsonMapper.Services
             using (var reader = new StreamReader(filePath))
             using (var csv = new CsvReader(reader, config))
             {
-                using (var dr = new CsvDataReader(csv))
+                if (!csv.Read())
                 {
-                    sourceFile.RawData.Load(dr);
+                    return sourceFile;
+                }
+
+                var firstRecord = csv.Context.Parser.Record;
+                if (firstRecord == null) return sourceFile;
+
+                int columnCount = firstRecord.Length;
+                for (int i = 0; i < columnCount; i++)
+                {
+                    sourceFile.RawData.Columns.Add($"Column{i + 1}");
+                }
+
+                var row = sourceFile.RawData.NewRow();
+                row.ItemArray = firstRecord;
+                sourceFile.RawData.Rows.Add(row);
+
+                int rowsRead = 1;
+                while (csv.Read() && rowsRead < PREVIEW_ROW_LIMIT)
+                {
+                    var nextRow = sourceFile.RawData.NewRow();
+                    var currentRecord = csv.Context.Parser.Record;
+                    
+                    var targetArray = new object[columnCount];
+                    Array.Copy(currentRecord, targetArray, Math.Min(currentRecord.Length, targetArray.Length));
+                    
+                    nextRow.ItemArray = targetArray;
+                    sourceFile.RawData.Rows.Add(nextRow);
+                    rowsRead++;
                 }
             }
             return sourceFile;
@@ -45,7 +70,7 @@ namespace CsvJsonMapper.Services
             file.Headers.Clear();
 
             var rawTable = file.RawData;
-            if (rawTable.Rows.Count == 0) return;
+            if (rawTable.Rows.Count == 0 || file.HeaderRowIndex >= rawTable.Rows.Count) return;
 
             DataRow headerRow = rawTable.Rows[file.HeaderRowIndex];
             var headers = new List<string>();
@@ -59,7 +84,7 @@ namespace CsvJsonMapper.Services
                     uniqueHeader = $"{header}_{suffix++}";
                 }
                 headers.Add(uniqueHeader);
-                file.ProcessedData.Columns.Add(uniqueHeader);
+                file.ProcessedData.Columns.Add(uniqueHeader, typeof(string));
             }
             file.Headers.AddRange(headers);
 
@@ -72,8 +97,55 @@ namespace CsvJsonMapper.Services
 
                 var rawRow = rawTable.Rows[i];
                 var newRow = file.ProcessedData.NewRow();
-                newRow.ItemArray = rawRow.ItemArray;
+                
+                var sourceArray = rawRow.ItemArray;
+                var targetArray = new object[file.ProcessedData.Columns.Count];
+                
+                Array.Copy(sourceArray, targetArray, Math.Min(sourceArray.Length, targetArray.Length));
+                
+                newRow.ItemArray = targetArray;
                 file.ProcessedData.Rows.Add(newRow);
+            }
+
+            DetectColumnTypes(file);
+        }
+
+        private void DetectColumnTypes(CsvSourceFile file)
+        {
+            file.DetectedColumnTypes.Clear();
+            foreach (DataColumn column in file.ProcessedData.Columns)
+            {
+                bool isInt = true;
+                bool isDouble = true;
+
+                foreach (DataRow row in file.ProcessedData.Rows)
+                {
+                    string value = row[column] as string;
+                    if (string.IsNullOrEmpty(value)) continue;
+
+                    if (isInt && !int.TryParse(value, out _))
+                    {
+                        isInt = false;
+                    }
+                    if (isDouble && !double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+                    {
+                        isDouble = false;
+                    }
+                    if (!isInt && !isDouble) break;
+                }
+
+                if (isInt)
+                {
+                    file.DetectedColumnTypes[column.ColumnName] = "int";
+                }
+                else if (isDouble)
+                {
+                    file.DetectedColumnTypes[column.ColumnName] = "double";
+                }
+                else
+                {
+                    file.DetectedColumnTypes[column.ColumnName] = "string";
+                }
             }
         }
 
@@ -96,3 +168,4 @@ namespace CsvJsonMapper.Services
         }
     }
 }
+
