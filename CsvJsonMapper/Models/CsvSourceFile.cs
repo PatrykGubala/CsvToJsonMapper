@@ -18,6 +18,7 @@ namespace CsvJsonMapper.Models
         public DataTable ProcessedData { get; set; }
         public List<string> Headers { get; set; }
         public Dictionary<string, string> DetectedColumnTypes { get; set; }
+        public List<string> PrimaryKeyColumns { get; set; }
 
         public CsvSourceFile()
         {
@@ -26,8 +27,14 @@ namespace CsvJsonMapper.Models
             Headers = new List<string>();
             MetadataRowIndices = new List<int>();
             DetectedColumnTypes = new Dictionary<string, string>();
+            PrimaryKeyColumns = new List<string>();
             HeaderRowIndex = 0;
             IsRootFile = false;
+        }
+
+        public override string ToString()
+        {
+            return FileName;
         }
     }
 }

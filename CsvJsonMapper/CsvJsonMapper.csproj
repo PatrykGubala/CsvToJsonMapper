@@ -18,6 +18,15 @@
       <Compile Update="Forms\Dialogs\InputBoxDialog.cs">
         <SubType>Form</SubType>
       </Compile>
+      <Compile Update="Forms\Dialogs\ManageRelationsDialog.cs">
+        <SubType>Form</SubType>
+      </Compile>
+      <Compile Update="Forms\Dialogs\AddEditRelationsDialog.cs">
+        <SubType>Form</SubType>
+      </Compile>
+      <Compile Update="Forms\Dialogs\SelectRelationsDialog.cs">
+        <SubType>Form</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
