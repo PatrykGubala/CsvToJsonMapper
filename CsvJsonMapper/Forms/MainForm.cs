@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -19,7 +20,9 @@ namespace CsvJsonMapper.Forms
     {
         private List<CsvSourceFile> _loadedFiles;
         private CsvParsingService _parsingService;
+        private List<Relation> _relations;
         private Font _rootNodeFont;
+        private Font _potentialKeyFont;
 
         private MappingNode _rootMappingNode;
         private ContextMenuStrip _jsonStructureContextMenu;
@@ -34,8 +37,10 @@ namespace CsvJsonMapper.Forms
         {
             InitializeComponent();
             _loadedFiles = new List<CsvSourceFile>();
+            _relations = new List<Relation>();
             _parsingService = new CsvParsingService();
             _rootNodeFont = new Font(tvSourceFiles.Font, FontStyle.Bold);
+            _potentialKeyFont = new Font(tvSourceFiles.Font, FontStyle.Italic);
 
             InitializeDragDropAndContextMenus();
             InitializeJsonCreator();
@@ -49,8 +54,14 @@ namespace CsvJsonMapper.Forms
             _menuRenameNode = new ToolStripMenuItem("Zmień nazwę");
             _menuDeleteNode = new ToolStripMenuItem("Usuń");
 
-            _menuAddObject.Click += menuAddObject_Click;
-            _menuAddArray.Click += menuAddArray_Click;
+            var menuAddEmptyObject = new ToolStripMenuItem("Dodaj Pusty Obiekt", null, menuAddObject_Click);
+            var menuAddObjectFromRelation = new ToolStripMenuItem("Dodaj Obiekt z Relacji (1:1)", null, menuAddFromRelation_Click);
+            _menuAddObject.DropDownItems.AddRange(new ToolStripItem[] { menuAddEmptyObject, menuAddObjectFromRelation });
+
+            var menuAddEmptyArray = new ToolStripMenuItem("Dodaj Pustą Tablicę", null, menuAddArray_Click);
+            var menuAddArrayFromRelation = new ToolStripMenuItem("Dodaj Tablicę z Relacji (1:N)", null, menuAddFromRelation_Click);
+            _menuAddArray.DropDownItems.AddRange(new ToolStripItem[] { menuAddEmptyArray, menuAddArrayFromRelation });
+
             _menuRenameNode.Click += menuRenameNode_Click;
             _menuDeleteNode.Click += menuDeleteNode_Click;
 
@@ -61,7 +72,7 @@ namespace CsvJsonMapper.Forms
                 _menuRenameNode,
                 _menuDeleteNode
             });
-            
+
             tvJsonStructure.ContextMenuStrip = _jsonStructureContextMenu;
             tvJsonStructure.LabelEdit = true;
 
@@ -81,8 +92,18 @@ namespace CsvJsonMapper.Forms
 
         private string GetNodeText(MappingNode node)
         {
-            if (node is MappingObject) return $"{node.Name} (obiekt)";
-            if (node is MappingArray) return $"{node.Name} (tablica)";
+            if (node is MappingObject obj)
+            {
+                var rel = _relations.FirstOrDefault(r => r.Id == obj.RelationId);
+                string relInfo = rel != null ? $" (Rel: {rel.Name})" : "";
+                return $"{node.Name} (obiekt){relInfo}";
+            }
+            if (node is MappingArray arr)
+            {
+                var rel = _relations.FirstOrDefault(r => r.Id == arr.RelationId);
+                string relInfo = rel != null ? $" (Rel: {rel.Name})" : "";
+                return $"{node.Name} (tablica){relInfo}";
+            }
             if (node is MappingField field) return $"{field.SourceColumnName} ({field.SourceColumnType}): \"{field.Name}\"";
             return node.Name;
         }
@@ -130,11 +151,12 @@ namespace CsvJsonMapper.Forms
             {
                 if (ofd.ShowDialog() != DialogResult.OK) return;
 
-                using (var dialog = new ImportConfigurationDialog(ofd.FileNames))
+                using (var dialog = new ImportConfigurationDialog(ofd.FileNames, _parsingService))
                 {
                     if (dialog.ShowDialog() != DialogResult.OK) return;
 
                     _loadedFiles.Clear();
+                    _relations.Clear();
                     foreach (string filePath in ofd.FileNames)
                     {
                         try
@@ -147,6 +169,14 @@ namespace CsvJsonMapper.Forms
                             csvFile.IsRootFile = (filePath == dialog.RootFilePath);
 
                             _parsingService.ProcessData(csvFile);
+
+                            foreach (var typeOverride in config.ColumnTypeOverrides)
+                            {
+                                if (csvFile.DetectedColumnTypes.ContainsKey(typeOverride.Key))
+                                {
+                                    csvFile.DetectedColumnTypes[typeOverride.Key] = typeOverride.Value;
+                                }
+                            }
 
                             _loadedFiles.Add(csvFile);
                         }
@@ -215,7 +245,13 @@ namespace CsvJsonMapper.Forms
                 foreach (var header in file.Headers)
                 {
                     string type = file.DetectedColumnTypes.ContainsKey(header) ? file.DetectedColumnTypes[header] : "string";
-                    fileNode.Nodes.Add($"{header} ({type})").Tag = header;
+                    var columnNode = fileNode.Nodes.Add($"{header} ({type})");
+                    columnNode.Tag = header;
+
+                    if (type == "int")
+                    {
+                        columnNode.NodeFont = _potentialKeyFont;
+                    }
                 }
                 tvSourceFiles.Nodes.Add(fileNode);
             }
@@ -250,10 +286,10 @@ namespace CsvJsonMapper.Forms
         private void Dgv_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             var dgv = sender as DataGridView;
-            var file = dgv?.Tag as CsvSourceFile;
-            if (file == null) return;
-
             if (dgv == null) return;
+            var file = dgv.Tag as CsvSourceFile;
+            if (file == null) return;
+            
             foreach (DataGridViewRow row in dgv.Rows)
             {
                 if (row.IsNewRow) continue;
@@ -334,43 +370,70 @@ namespace CsvJsonMapper.Forms
 
             _menuRenameNode.Enabled = !isRoot;
             _menuDeleteNode.Enabled = !isRoot;
+
+            bool canAddRelation = (selectedNode != null && selectedNode.Tag is IMappingContainer);
+            _menuAddObject.DropDownItems[1].Enabled = canAddRelation && _relations.Any(r => r.Type == RelationType.OneToOne);
+            _menuAddArray.DropDownItems[1].Enabled = canAddRelation && _relations.Any(r => r.Type == RelationType.OneToMany);
         }
 
         private void menuAddObject_Click(object sender, EventArgs e)
         {
-            var selectedNode = tvJsonStructure.SelectedNode;
-            if (selectedNode == null || !(selectedNode.Tag is IMappingContainer container))
-            {
-                selectedNode = tvJsonStructure.Nodes[0];
-                container = (IMappingContainer)_rootMappingNode;
-            }
-
-            string name = $"nowyObiekt{_newNodeCounter++}";
-            var newObjectModel = new MappingObject { Name = name };
-            container.Children.Add(newObjectModel);
-
-            var newTvNode = selectedNode.Nodes.Add(GetNodeText(newObjectModel));
-            newTvNode.Tag = newObjectModel;
-            selectedNode.Expand();
-
-            UpdateJsonPreview();
+            AddMappingNode(new MappingObject { Name = $"nowyObiekt{_newNodeCounter++}" });
         }
 
         private void menuAddArray_Click(object sender, EventArgs e)
         {
+            AddMappingNode(new MappingArray { Name = $"nowaTablica{_newNodeCounter++}" });
+        }
+
+        private void menuAddFromRelation_Click(object sender, EventArgs e)
+        {
+            bool isArray = (sender as ToolStripItem)?.OwnerItem == _menuAddArray;
+            var type = isArray ? RelationType.OneToMany : RelationType.OneToOne;
+
+            using (var dialog = new SelectRelationDialog(_relations, type))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    var relation = dialog.SelectedRelation;
+                    if (isArray)
+                    {
+                        AddMappingNode(new MappingArray
+                        {
+                            Name = relation.Name,
+                            RelationId = relation.Id
+                        });
+                    }
+                    else
+                    {
+                        AddMappingNode(new MappingObject
+                        {
+                            Name = relation.Name,
+                            RelationId = relation.Id
+                        });
+                    }
+                }
+            }
+        }
+
+        private void AddMappingNode(MappingNode node)
+        {
             var selectedNode = tvJsonStructure.SelectedNode;
-            if (selectedNode == null || !(selectedNode.Tag is IMappingContainer container))
+            IMappingContainer container;
+
+            if (selectedNode == null || !(selectedNode.Tag is IMappingContainer))
             {
                 selectedNode = tvJsonStructure.Nodes[0];
                 container = (IMappingContainer)_rootMappingNode;
             }
+            else
+            {
+                container = (IMappingContainer)selectedNode.Tag;
+            }
 
-            string name = $"nowaTablica{_newNodeCounter++}";
-            var newArrayModel = new MappingArray { Name = name };
-            container.Children.Add(newArrayModel);
-
-            var newTvNode = selectedNode.Nodes.Add(GetNodeText(newArrayModel));
-            newTvNode.Tag = newArrayModel;
+            container.Children.Add(node);
+            var newTvNode = selectedNode.Nodes.Add(GetNodeText(node));
+            newTvNode.Tag = node;
             selectedNode.Expand();
 
             UpdateJsonPreview();
@@ -384,15 +447,17 @@ namespace CsvJsonMapper.Forms
             if (selectedNode.Tag is MappingField field)
             {
                 string value = field.Name;
-                using var dialog = new InputBoxDialog("Zmień nazwę", "Wprowadź nową nazwę wyjściową JSON:", value);
-                
-                if (dialog.ShowDialog() != DialogResult.OK) return;
-                
-                field.Name = dialog.Value;
-                selectedNode.Text = GetNodeText(field);
-                UpdateJsonPreview();
+                using (var dialog = new InputBoxDialog("Zmień nazwę", "Wprowadź nową nazwę wyjściową JSON:", value))
+                {
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        field.Name = dialog.Value;
+                        selectedNode.Text = GetNodeText(field);
+                        UpdateJsonPreview();
+                    }
+                }
             }
-            else if (selectedNode.Tag is MappingObject or MappingArray)
+            else if (selectedNode.Tag is MappingObject || selectedNode.Tag is MappingArray)
             {
                 selectedNode.BeginEdit();
             }
@@ -400,7 +465,7 @@ namespace CsvJsonMapper.Forms
 
         private void tvJsonStructure_BeforeLabelEdit(object sender, NodeLabelEditEventArgs e)
         {
-            if (e.Node is { Tag: MappingField })
+            if (e.Node.Tag is MappingField)
             {
                 e.CancelEdit = true;
             }
@@ -414,17 +479,17 @@ namespace CsvJsonMapper.Forms
                 return;
             }
 
-            if (e.Node.Tag is MappingObject or MappingArray)
+            if (e.Node.Tag is MappingObject || e.Node.Tag is MappingArray)
             {
                 var modelNode = (MappingNode)e.Node.Tag;
                 modelNode.Name = e.Label;
                 e.Node.Text = GetNodeText(modelNode);
                 UpdateJsonPreview();
             }
-            else if (e.Node.Tag is MappingField tag)
+            else if (e.Node.Tag is MappingField)
             {
                 e.CancelEdit = true;
-                e.Node.Text = GetNodeText(tag);
+                e.Node.Text = GetNodeText((MappingNode)e.Node.Tag);
             }
         }
 
@@ -453,8 +518,14 @@ namespace CsvJsonMapper.Forms
 
         private void tvJsonStructure_DragEnter(object sender, DragEventArgs e)
         {
-            e.Effect = e.Data != null && e.Data.GetDataPresent(
-                typeof(TreeNode)) ? DragDropEffects.Copy : DragDropEffects.None;
+            if (e.Data.GetDataPresent(typeof(TreeNode)))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
         }
 
         private void tvJsonStructure_DragDrop(object sender, DragEventArgs e)
@@ -489,10 +560,19 @@ namespace CsvJsonMapper.Forms
 
         private void tvJsonStructure_KeyDown(object sender, KeyEventArgs e)
         {
-            if (tvJsonStructure.SelectedNode == null) return;
-            e.Handled = true;
-            menuRenameNode_Click(sender, EventArgs.Empty);
+            if (e.KeyCode == Keys.F2 && tvJsonStructure.SelectedNode != null)
+            {
+                e.Handled = true;
+                menuRenameNode_Click(sender, EventArgs.Empty);
+            }
+        }
+
+        private void manageRelationsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new ManageRelationsDialog(_relations, _loadedFiles))
+            {
+                dialog.ShowDialog();
+            }
         }
     }
 }
-
