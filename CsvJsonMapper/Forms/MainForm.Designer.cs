@@ -200,7 +200,7 @@
             this.groupBoxJsonTemplate.Size = new System.Drawing.Size(450, 311);
             this.groupBoxJsonTemplate.TabIndex = 0;
             this.groupBoxJsonTemplate.TabStop = false;
-            this.groupBoxJsonTemplate.Text = "Struktura JSON (Kreator)";
+            this.groupBoxJsonTemplate.Text = "Struktura JSON";
             // 
             // structurePreviewSplitter
             // 

@@ -1,5 +1,6 @@
 ﻿using CsvJsonMapper.Models;
 using CsvJsonMapper.Models.Mapping;
+using System.Data;
 
 
 namespace CsvJsonMapper.Forms.Dialogs
@@ -9,14 +10,16 @@ namespace CsvJsonMapper.Forms.Dialogs
         private List<CsvSourceFile> _files;
         private CsvSourceFile _selectedParent => cmbParentFile.SelectedItem as CsvSourceFile;
         private CsvSourceFile _selectedChild => cmbChildFile.SelectedItem as CsvSourceFile;
+        private CsvSourceFile _rootFile;
 
         public Relation Relation { get; private set; }
 
-        public AddEditRelationDialog(List<CsvSourceFile> files, Relation relationToEdit = null)
+        public AddEditRelationDialog(List<CsvSourceFile> files, CsvSourceFile rootFile, Relation relationToEdit = null)
         {
             InitializeComponent();
             _files = files;
-            Relation = relationToEdit ?? new Relation();
+            _rootFile = rootFile;
+            Relation = relationToEdit ?? new Relation { Id = Guid.NewGuid() };
         }
 
         private void AddEditRelationDialog_Load(object sender, EventArgs e)
@@ -25,7 +28,7 @@ namespace CsvJsonMapper.Forms.Dialogs
             cmbChildFile.Items.AddRange(_files.ToArray());
             cmbRelationType.Items.AddRange(Enum.GetNames(typeof(RelationType)));
 
-            if (!string.IsNullOrEmpty(Relation.Name))
+            if (Relation.Id != Guid.Empty && !string.IsNullOrEmpty(Relation.Name))
             {
                 txtRelationName.Text = Relation.Name;
                 cmbParentFile.SelectedItem = _files.FirstOrDefault(f => f.FileName == Relation.ParentFileId);
@@ -34,10 +37,17 @@ namespace CsvJsonMapper.Forms.Dialogs
 
                 PopulateKeys(lbParentKey, _selectedParent, Relation.ParentKeyColumns);
                 PopulateKeys(lbChildKey, _selectedChild, Relation.ChildKeyColumns);
+
+                cmbParentFile.Enabled = false;
             }
             else
             {
                 cmbRelationType.SelectedIndex = 0;
+                if (_rootFile != null)
+                {
+                    cmbParentFile.SelectedItem = _rootFile;
+                    cmbParentFile.Enabled = false;
+                }
             }
         }
 
@@ -65,7 +75,7 @@ namespace CsvJsonMapper.Forms.Dialogs
             }
             PopulateKeys(lbParentKey, _selectedParent, new List<string>());
             UpdateDefaultRelationName();
-            ValidateKeyCounts();
+            ValidateSelections();
         }
 
         private void cmbChildFile_SelectedIndexChanged(object sender, EventArgs e)
@@ -77,7 +87,7 @@ namespace CsvJsonMapper.Forms.Dialogs
             }
             PopulateKeys(lbChildKey, _selectedChild, new List<string>());
             UpdateDefaultRelationName();
-            ValidateKeyCounts();
+            ValidateSelections();
         }
 
         private void UpdateDefaultRelationName()
@@ -91,11 +101,28 @@ namespace CsvJsonMapper.Forms.Dialogs
             }
         }
 
-        private void ValidateKeyCounts()
+        private bool AreKeysUnique(CsvSourceFile file, List<string> keyColumns)
+        {
+            if (file == null || keyColumns.Count == 0) return true;
+
+            var keyHashSet = new HashSet<string>();
+            foreach (DataRow row in file.ProcessedData.Rows)
+            {
+                string compositeKey = string.Join("|", keyColumns.Select(col => row[col]?.ToString() ?? ""));
+                if (!keyHashSet.Add(compositeKey))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void ValidateSelections()
         {
             if (_selectedParent == null)
             {
                 lblChildFkWarning.Visible = false;
+                lblParentPkWarning.Visible = false;
                 return;
             }
 
@@ -103,6 +130,17 @@ namespace CsvJsonMapper.Forms.Dialogs
             int fkCount = lbChildKey.SelectedItems.Count;
 
             lblChildFkWarning.Visible = (pkCount > 0 && fkCount > 0 && pkCount != fkCount);
+
+            if (pkCount > 0)
+            {
+                var parentKeys = lbParentKey.SelectedItems.Cast<string>().ToList();
+                bool areUnique = AreKeysUnique(_selectedParent, parentKeys);
+                lblParentPkWarning.Visible = !areUnique;
+            }
+            else
+            {
+                lblParentPkWarning.Visible = false;
+            }
         }
 
         private void btnOk_Click(object sender, EventArgs e)
@@ -115,7 +153,7 @@ namespace CsvJsonMapper.Forms.Dialogs
                 }
                 else
                 {
-                    Relation.Name = $"Relacja_{Guid.NewGuid().ToString().Substring(0, 4)}";
+                    Relation.Name = $"Relacja_{Relation.Id.ToString().Substring(0, 4)}";
                 }
             }
             else
@@ -128,26 +166,36 @@ namespace CsvJsonMapper.Forms.Dialogs
                 MessageBox.Show("Plik nadrzędny i podrzędny muszą być wybrane.", "Błąd Walidacji");
                 return;
             }
-            if (lbParentKey.SelectedItems.Count == 0)
+
+            var parentKeys = lbParentKey.SelectedItems.Cast<string>().ToList();
+            if (parentKeys.Count == 0)
             {
                 MessageBox.Show("Klucz nadrzędny (PK) musi być wybrany.", "Błąd Walidacji");
                 return;
             }
-            if (lbChildKey.SelectedItems.Count == 0)
+
+            var childKeys = lbChildKey.SelectedItems.Cast<string>().ToList();
+            if (childKeys.Count == 0)
             {
-                MessageBox.Show("Klucz obcy (FK) musi być wybrany.", "Błąd Walidacji");
+                MessageBox.Show("Klucz obcy FK musi być wybrany.", "Błąd Walidacji");
                 return;
             }
-            if (lbParentKey.SelectedItems.Count != lbChildKey.SelectedItems.Count)
+            if (parentKeys.Count != childKeys.Count)
             {
                 MessageBox.Show("Liczba kolumn klucza nadrzędnego i obcego musi być taka sama.", "Błąd Walidacji");
                 return;
             }
 
+            if (!AreKeysUnique(_selectedParent, parentKeys))
+            {
+                MessageBox.Show("Klucz nadrzędny PK nie jest unikalny. Wybierz inną kolumnę.", "Błąd Walidacji");
+                return;
+            }
+
             Relation.ParentFileId = _selectedParent.FileName;
-            Relation.ParentKeyColumns = lbParentKey.SelectedItems.Cast<string>().ToList();
+            Relation.ParentKeyColumns = parentKeys;
             Relation.ChildFileId = _selectedChild.FileName;
-            Relation.ChildKeyColumns = lbChildKey.SelectedItems.Cast<string>().ToList();
+            Relation.ChildKeyColumns = childKeys;
             Relation.Type = (RelationType)Enum.Parse(typeof(RelationType), cmbRelationType.SelectedItem.ToString());
 
             this.DialogResult = DialogResult.OK;
@@ -156,12 +204,12 @@ namespace CsvJsonMapper.Forms.Dialogs
 
         private void lbParentKey_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ValidateKeyCounts();
+            ValidateSelections();
         }
 
         private void lbChildKey_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ValidateKeyCounts();
+            ValidateSelections();
         }
     }
 }

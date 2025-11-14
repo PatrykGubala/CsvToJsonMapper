@@ -1,9 +1,6 @@
 ﻿using CsvJsonMapper.Models;
 using CsvJsonMapper.Models.Mapping;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
+
 
 namespace CsvJsonMapper.Forms.Dialogs
 {
@@ -38,7 +35,8 @@ namespace CsvJsonMapper.Forms.Dialogs
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            using (var dialog = new AddEditRelationDialog(_files))
+            var rootFile = _files.FirstOrDefault(f => f.IsRootFile);
+            using (var dialog = new AddEditRelationDialog(_files, rootFile))
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
@@ -52,8 +50,9 @@ namespace CsvJsonMapper.Forms.Dialogs
         {
             if (lvRelations.SelectedItems.Count == 0) return;
             var relationToEdit = (Relation)lvRelations.SelectedItems[0].Tag;
+            var rootFile = _files.FirstOrDefault(f => f.IsRootFile);
 
-            using (var dialog = new AddEditRelationDialog(_files, relationToEdit))
+            using (var dialog = new AddEditRelationDialog(_files, rootFile, relationToEdit))
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {

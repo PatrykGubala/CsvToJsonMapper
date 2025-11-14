@@ -26,6 +26,7 @@ namespace CsvJsonMapper.Forms
 
         private MappingNode _rootMappingNode;
         private ContextMenuStrip _jsonStructureContextMenu;
+        private ContextMenuStrip _sourceTreeContextMenu;
         private int _newNodeCounter = 1;
 
         private ToolStripMenuItem _menuAddObject;
@@ -88,6 +89,53 @@ namespace CsvJsonMapper.Forms
             tvJsonStructure.AllowDrop = true;
             tvJsonStructure.DragEnter += tvJsonStructure_DragEnter;
             tvJsonStructure.DragDrop += tvJsonStructure_DragDrop;
+            
+            _sourceTreeContextMenu = new ContextMenuStrip();
+            var setRootItem = new ToolStripMenuItem("Ustaw jako plik główny (Root)", null, OnSourceNode_SetAsRoot);
+            _sourceTreeContextMenu.Items.Add(setRootItem);
+            tvSourceFiles.ContextMenuStrip = _sourceTreeContextMenu;
+            tvSourceFiles.NodeMouseClick += tvSourceFiles_NodeMouseClick;
+            _sourceTreeContextMenu.Opening += OnSourceTreeContextMenu_Opening;
+        }
+
+        private void tvSourceFiles_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                tvSourceFiles.SelectedNode = e.Node;
+            }
+        }
+
+        private void OnSourceTreeContextMenu_Opening(object sender, CancelEventArgs e)
+        {
+            var node = tvSourceFiles.SelectedNode;
+            if (node != null && node.Parent == null && node.Tag is CsvSourceFile file)
+            {
+                var setRootItem = _sourceTreeContextMenu.Items[0];
+                setRootItem.Enabled = !file.IsRootFile;
+            }
+            else
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private void OnSourceNode_SetAsRoot(object sender, EventArgs e)
+        {
+            var node = tvSourceFiles.SelectedNode;
+            if (node == null || !(node.Tag is CsvSourceFile newRootFile)) return;
+
+            var oldRootFile = _loadedFiles.FirstOrDefault(f => f.IsRootFile);
+            if (oldRootFile != null)
+            {
+                oldRootFile.IsRootFile = false;
+            }
+
+            newRootFile.IsRootFile = true;
+
+            UpdateSourceTreeView();
+            InitializeJsonCreator();
+            UpdateJsonPreview();
         }
 
         private string GetNodeText(MappingNode node)

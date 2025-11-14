@@ -18,6 +18,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtRelationName = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblParentPkWarning = new System.Windows.Forms.Label();
             this.lbParentKey = new System.Windows.Forms.ListBox();
             this.label3 = new System.Windows.Forms.Label();
             this.cmbParentFile = new System.Windows.Forms.ComboBox();
@@ -54,16 +55,29 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.lblParentPkWarning);
             this.groupBox1.Controls.Add(this.lbParentKey);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.cmbParentFile);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Location = new System.Drawing.Point(15, 47);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(557, 155);
+            this.groupBox1.Size = new System.Drawing.Size(557, 175);
             this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Rodzic (Parent)";
+            // 
+            // lblParentPkWarning
+            // 
+            this.lblParentPkWarning.AutoSize = true;
+            this.lblParentPkWarning.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.lblParentPkWarning.ForeColor = System.Drawing.Color.Red;
+            this.lblParentPkWarning.Location = new System.Drawing.Point(138, 148);
+            this.lblParentPkWarning.Name = "lblParentPkWarning";
+            this.lblParentPkWarning.Size = new System.Drawing.Size(354, 13);
+            this.lblParentPkWarning.TabIndex = 3;
+            this.lblParentPkWarning.Text = "Ostrzeżenie: Wybrane kolumny nie są unikalne w próbce.";
+            this.lblParentPkWarning.Visible = false;
             // 
             // lbParentKey
             // 
@@ -110,7 +124,7 @@
             this.groupBox2.Controls.Add(this.label5);
             this.groupBox2.Controls.Add(this.cmbChildFile);
             this.groupBox2.Controls.Add(this.label4);
-            this.groupBox2.Location = new System.Drawing.Point(15, 208);
+            this.groupBox2.Location = new System.Drawing.Point(15, 228);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(557, 155);
             this.groupBox2.TabIndex = 2;
@@ -168,7 +182,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(12, 378);
+            this.label6.Location = new System.Drawing.Point(12, 398);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(61, 13);
             this.label6.TabIndex = 3;
@@ -178,14 +192,14 @@
             // 
             this.cmbRelationType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbRelationType.FormattingEnabled = true;
-            this.cmbRelationType.Location = new System.Drawing.Point(95, 375);
+            this.cmbRelationType.Location = new System.Drawing.Point(95, 395);
             this.cmbRelationType.Name = "cmbRelationType";
             this.cmbRelationType.Size = new System.Drawing.Size(183, 21);
             this.cmbRelationType.TabIndex = 3;
             // 
             // btnOk
             // 
-            this.btnOk.Location = new System.Drawing.Point(416, 412);
+            this.btnOk.Location = new System.Drawing.Point(416, 432);
             this.btnOk.Name = "btnOk";
             this.btnOk.Size = new System.Drawing.Size(75, 23);
             this.btnOk.TabIndex = 4;
@@ -196,7 +210,7 @@
             // btnCancel
             // 
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(497, 412);
+            this.btnCancel.Location = new System.Drawing.Point(497, 432);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 5;
@@ -209,7 +223,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(584, 447);
+            this.ClientSize = new System.Drawing.Size(584, 467);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.cmbRelationType);
@@ -253,5 +267,6 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label lblChildFkWarning;
         private System.Windows.Forms.ListBox lbParentKey;
+        private System.Windows.Forms.Label lblParentPkWarning;
     }
 }
