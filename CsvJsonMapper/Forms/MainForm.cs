@@ -4,15 +4,8 @@ using CsvJsonMapper.Models.Mapping;
 using CsvJsonMapper.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
+
 
 namespace CsvJsonMapper.Forms
 {
@@ -20,6 +13,7 @@ namespace CsvJsonMapper.Forms
     {
         private List<CsvSourceFile> _loadedFiles;
         private CsvParsingService _parsingService;
+        private JsonGenerationService _jsonGenerationService; 
         private List<Relation> _relations;
         private Font _rootNodeFont;
         private Font _potentialKeyFont;
@@ -40,6 +34,7 @@ namespace CsvJsonMapper.Forms
             _loadedFiles = new List<CsvSourceFile>();
             _relations = new List<Relation>();
             _parsingService = new CsvParsingService();
+            _jsonGenerationService = new JsonGenerationService(); 
             _rootNodeFont = new Font(tvSourceFiles.Font, FontStyle.Bold);
             _potentialKeyFont = new Font(tvSourceFiles.Font, FontStyle.Italic);
 
@@ -355,16 +350,29 @@ namespace CsvJsonMapper.Forms
 
         private void UpdateJsonPreview()
         {
-            string json = GeneratePreviewJson();
-            rtbJsonStructurePreview.Text = json;
-            rtbJsonPreview.Text = "Podgląd finalnego pliku JSON (z danymi) pojawi się tutaj po implementacji generowania.";
+            string jsonStructure = GeneratePreviewJsonStructure();
+            rtbJsonStructurePreview.Text = jsonStructure;
+
+            try
+            {
+                string jsonData = _jsonGenerationService.GeneratePreviewJson(
+                    _rootMappingNode,
+                    _loadedFiles,
+                    _relations
+                );
+                rtbJsonPreview.Text = jsonData;
+            }
+            catch (Exception ex)
+            {
+                rtbJsonPreview.Text = $"Błąd podczas generowania podglądu danych: {ex.Message}";
+            }
         }
 
-        private string GeneratePreviewJson()
+        private string GeneratePreviewJsonStructure()
         {
             try
             {
-                JToken token = BuildJsonNode(_rootMappingNode);
+                JToken token = BuildJsonStructureNode(_rootMappingNode);
                 return token.ToString(Formatting.Indented);
             }
             catch (Exception ex)
@@ -373,7 +381,7 @@ namespace CsvJsonMapper.Forms
             }
         }
 
-        private JToken BuildJsonNode(MappingNode node)
+        private JToken BuildJsonStructureNode(MappingNode node)
         {
             if (node == null) return null;
 
@@ -382,7 +390,7 @@ namespace CsvJsonMapper.Forms
                 var jObj = new JObject();
                 foreach (var child in obj.Children)
                 {
-                    jObj.Add(child.Name, BuildJsonNode(child));
+                    jObj.Add(child.Name, BuildJsonStructureNode(child));
                 }
                 return jObj;
             }
@@ -393,7 +401,7 @@ namespace CsvJsonMapper.Forms
                 var templateNode = arr.Children.FirstOrDefault();
                 if (templateNode != null)
                 {
-                    jArr.Add(BuildJsonNode(templateNode));
+                    jArr.Add(BuildJsonStructureNode(templateNode));
                 }
                 return jArr;
             }
@@ -620,6 +628,7 @@ namespace CsvJsonMapper.Forms
             using (var dialog = new ManageRelationsDialog(_relations, _loadedFiles))
             {
                 dialog.ShowDialog();
+                UpdateJsonPreview(); 
             }
         }
     }

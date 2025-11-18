@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace CsvJsonMapper.Models.Mapping
+﻿namespace CsvJsonMapper.Models.Mapping
 {
     public interface IMappingContainer
     {
