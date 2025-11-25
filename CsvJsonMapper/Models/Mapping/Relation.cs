@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using YamlDotNet.Serialization;
 
 namespace CsvJsonMapper.Models.Mapping
 {
@@ -25,10 +26,14 @@ namespace CsvJsonMapper.Models.Mapping
         }
 
         [Browsable(false)]
+        [YamlIgnore]
         public string ParentKeyDisplay => string.Join(", ", ParentKeyColumns);
+
         [Browsable(false)]
+        [YamlIgnore]
         public string ChildKeyDisplay => string.Join(", ", ChildKeyColumns);
 
+        [YamlIgnore]
         public string Description => $"{ParentFileId} ({ParentKeyDisplay}) -> {ChildFileId} ({ChildKeyDisplay}) [{Type}]";
     }
 }

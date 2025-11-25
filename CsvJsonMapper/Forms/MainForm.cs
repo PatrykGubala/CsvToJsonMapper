@@ -6,14 +6,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel;
 
-
 namespace CsvJsonMapper.Forms
 {
     public partial class MainForm : Form
     {
         private List<CsvSourceFile> _loadedFiles;
         private CsvParsingService _parsingService;
-        private JsonGenerationService _jsonGenerationService; 
+        private JsonGenerationService _jsonGenerationService;
+        private YamlConfigurationService _yamlConfigService;
         private List<Relation> _relations;
         private Font _rootNodeFont;
         private Font _potentialKeyFont;
@@ -34,12 +34,78 @@ namespace CsvJsonMapper.Forms
             _loadedFiles = new List<CsvSourceFile>();
             _relations = new List<Relation>();
             _parsingService = new CsvParsingService();
-            _jsonGenerationService = new JsonGenerationService(); 
+            _jsonGenerationService = new JsonGenerationService();
+            _yamlConfigService = new YamlConfigurationService(_parsingService);
             _rootNodeFont = new Font(tvSourceFiles.Font, FontStyle.Bold);
             _potentialKeyFont = new Font(tvSourceFiles.Font, FontStyle.Italic);
 
             InitializeDragDropAndContextMenus();
             InitializeJsonCreator();
+            SetupTemplateMenu();
+        }
+
+        private void SetupTemplateMenu()
+        {
+            var saveItem = new ToolStripMenuItem("Zapisz Szablon ...", null, SaveTemplate_Click);
+            var loadItem = new ToolStripMenuItem("Wczytaj Szablon ...", null, LoadTemplate_Click);
+
+            fileToolStripMenuItem.DropDownItems.Insert(2, new ToolStripSeparator());
+            fileToolStripMenuItem.DropDownItems.Insert(3, saveItem);
+            fileToolStripMenuItem.DropDownItems.Insert(4, loadItem);
+        }
+
+        private void SaveTemplate_Click(object sender, EventArgs e)
+        {
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "Pliki YAML (*.yaml)|*.yaml|Wszystkie pliki (*.*)|*.*";
+                sfd.Title = "Zapisz konfigurację projektu";
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        _yamlConfigService.SaveConfiguration(sfd.FileName, _loadedFiles, _relations, _rootMappingNode);
+                        MessageBox.Show("Szablon został zapisany pomyślnie.", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Błąd podczas zapisywania szablonu: {ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void LoadTemplate_Click(object sender, EventArgs e)
+        {
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Pliki YAML (*.yaml)|*.yaml|Wszystkie pliki (*.*)|*.*";
+                ofd.Title = "Wczytaj konfigurację projektu";
+
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        var result = _yamlConfigService.LoadConfiguration(ofd.FileName);
+
+                        _loadedFiles = result.Files;
+                        _relations = result.Relations;
+                        _rootMappingNode = result.RootNode;
+
+                        UpdateSourceTreeView();
+                        UpdateCsvViewsTabControl();
+                        RebuildJsonStructureTree();
+                        UpdateJsonPreview();
+
+                        lblStatus.Text = $"Wczytano konfigurację z pliku: {Path.GetFileName(ofd.FileName)}";
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Błąd podczas wczytywania szablonu: {ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
         }
 
         private void InitializeDragDropAndContextMenus()
@@ -180,6 +246,38 @@ namespace CsvJsonMapper.Forms
                     newTvNode.Tag = newFieldModel;
                 }
                 rootTvNode.Expand();
+            }
+        }
+
+        private void RebuildJsonStructureTree()
+        {
+            tvJsonStructure.Nodes.Clear();
+            if (_rootMappingNode == null) return;
+
+            var rootTvNode = tvJsonStructure.Nodes.Add(GetNodeText(_rootMappingNode));
+            rootTvNode.Tag = _rootMappingNode;
+
+            if (_rootMappingNode is IMappingContainer container)
+            {
+                foreach (var child in container.Children)
+                {
+                    BuildTreeRecursive(rootTvNode, child);
+                }
+            }
+            rootTvNode.ExpandAll();
+        }
+
+        private void BuildTreeRecursive(TreeNode parentTvNode, MappingNode mappingNode)
+        {
+            var tvNode = parentTvNode.Nodes.Add(GetNodeText(mappingNode));
+            tvNode.Tag = mappingNode;
+
+            if (mappingNode is IMappingContainer container)
+            {
+                foreach (var child in container.Children)
+                {
+                    BuildTreeRecursive(tvNode, child);
+                }
             }
         }
 
@@ -562,7 +660,6 @@ namespace CsvJsonMapper.Forms
                 UpdateJsonPreview();
             }
         }
-
 
         private void tvSourceFiles_ItemDrag(object sender, ItemDragEventArgs e)
         {

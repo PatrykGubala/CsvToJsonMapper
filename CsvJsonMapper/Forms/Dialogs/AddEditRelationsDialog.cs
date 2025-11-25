@@ -37,18 +37,17 @@ namespace CsvJsonMapper.Forms.Dialogs
 
                 PopulateKeys(lbParentKey, _selectedParent, Relation.ParentKeyColumns);
                 PopulateKeys(lbChildKey, _selectedChild, Relation.ChildKeyColumns);
-
-                cmbParentFile.Enabled = false;
             }
             else
             {
-                cmbRelationType.SelectedIndex = 0;
+                cmbRelationType.SelectedIndex = 1; 
+                
                 if (_rootFile != null)
                 {
                     cmbParentFile.SelectedItem = _rootFile;
-                    cmbParentFile.Enabled = false;
                 }
             }
+            cmbRelationType.Enabled = false;
         }
 
         private void PopulateKeys(ListBox listBox, CsvSourceFile file, List<string> selectedKeys)
@@ -141,6 +140,21 @@ namespace CsvJsonMapper.Forms.Dialogs
             {
                 lblParentPkWarning.Visible = false;
             }
+
+            if (fkCount > 0 && _selectedChild != null)
+            {
+                var childKeys = lbChildKey.SelectedItems.Cast<string>().ToList();
+                bool isChildKeyUnique = AreKeysUnique(_selectedChild, childKeys);
+
+                if (isChildKeyUnique)
+                {
+                    cmbRelationType.SelectedItem = RelationType.OneToOne.ToString();
+                }
+                else
+                {
+                    cmbRelationType.SelectedItem = RelationType.OneToMany.ToString();
+                }
+            }
         }
 
         private void btnOk_Click(object sender, EventArgs e)
@@ -183,12 +197,6 @@ namespace CsvJsonMapper.Forms.Dialogs
             if (parentKeys.Count != childKeys.Count)
             {
                 MessageBox.Show("Liczba kolumn klucza nadrzędnego i obcego musi być taka sama.", "Błąd Walidacji");
-                return;
-            }
-
-            if (!AreKeysUnique(_selectedParent, parentKeys))
-            {
-                MessageBox.Show("Klucz nadrzędny PK nie jest unikalny. Wybierz inną kolumnę.", "Błąd Walidacji");
                 return;
             }
 
