@@ -27,6 +27,9 @@
       <Compile Update="Forms\Dialogs\SelectRelationsDialog.cs">
         <SubType>Form</SubType>
       </Compile>
+      <Compile Update="Forms\ImportYamlConfigurationDIalog.cs">
+        <SubType>Form</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

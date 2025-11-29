@@ -15,7 +15,7 @@ namespace CsvJsonMapper.Services
             _parsingService = parsingService;
         }
 
-        public void SaveConfiguration(string filePath, List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode)
+        public string GetConfigurationYaml(List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode)
         {
             var config = new ProjectConfiguration
             {
@@ -23,18 +23,21 @@ namespace CsvJsonMapper.Services
                 RootNode = rootNode
             };
 
-            foreach (var file in files)
+            if (files != null)
             {
-                config.Files.Add(new FileSourceDefinition
+                foreach (var file in files)
                 {
-                    FilePath = file.FilePath,
-                    FileName = file.FileName,
-                    IsRootFile = file.IsRootFile,
-                    HeaderRowIndex = file.HeaderRowIndex,
-                    MetadataRowIndices = file.MetadataRowIndices,
-                    ColumnTypeOverrides = file.DetectedColumnTypes,
-                    PrimaryKeyColumns = file.PrimaryKeyColumns
-                });
+                    config.Files.Add(new FileSourceDefinition
+                    {
+                        FilePath = file.FilePath,
+                        FileName = file.FileName,
+                        IsRootFile = file.IsRootFile,
+                        HeaderRowIndex = file.HeaderRowIndex,
+                        MetadataRowIndices = file.MetadataRowIndices,
+                        ColumnTypeOverrides = file.DetectedColumnTypes,
+                        PrimaryKeyColumns = file.PrimaryKeyColumns
+                    });
+                }
             }
 
             var serializer = new SerializerBuilder()
@@ -44,7 +47,12 @@ namespace CsvJsonMapper.Services
                 .WithTagMapping("!array", typeof(MappingArray))
                 .Build();
 
-            string yaml = serializer.Serialize(config);
+            return serializer.Serialize(config);
+        }
+
+        public void SaveConfiguration(string filePath, List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode)
+        {
+            string yaml = GetConfigurationYaml(files, relations, rootNode);
             File.WriteAllText(filePath, yaml);
         }
 
@@ -69,7 +77,7 @@ namespace CsvJsonMapper.Services
                 foreach (var fileDef in config.Files)
                 {
                     if (!File.Exists(fileDef.FilePath))
-                    { 
+                    {
                         throw new FileNotFoundException($"Nie znaleziono pliku źródłowego: {fileDef.FilePath}");
                     }
 

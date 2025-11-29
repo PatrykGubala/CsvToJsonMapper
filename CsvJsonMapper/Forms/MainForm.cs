@@ -459,10 +459,13 @@ namespace CsvJsonMapper.Forms
                     _relations
                 );
                 rtbJsonPreview.Text = jsonData;
+                
+                rtbYamlPreview.Text = _yamlConfigService.GetConfigurationYaml(_loadedFiles, _relations, _rootMappingNode);
             }
             catch (Exception ex)
             {
                 rtbJsonPreview.Text = $"Błąd podczas generowania podglądu danych: {ex.Message}";
+                rtbYamlPreview.Text = $"Błąd podczas generowania podglądu YAML: {ex.Message}";
             }
         }
 

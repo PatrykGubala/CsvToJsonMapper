@@ -40,6 +40,9 @@
             this.tabPageJsonPreview = new System.Windows.Forms.TabPage();
             this.groupBoxJsonPreview = new System.Windows.Forms.GroupBox();
             this.rtbJsonPreview = new System.Windows.Forms.RichTextBox();
+            this.tabPageYamlPreview = new System.Windows.Forms.TabPage();
+            this.groupBoxYamlPreview = new System.Windows.Forms.GroupBox();
+            this.rtbYamlPreview = new System.Windows.Forms.RichTextBox();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
@@ -62,6 +65,8 @@
             this.groupBoxCsvViews.SuspendLayout();
             this.tabPageJsonPreview.SuspendLayout();
             this.groupBoxJsonPreview.SuspendLayout();
+            this.tabPageYamlPreview.SuspendLayout();
+            this.groupBoxYamlPreview.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -238,7 +243,7 @@
             this.groupBoxJsonStructurePreview.Size = new System.Drawing.Size(438, 142);
             this.groupBoxJsonStructurePreview.TabIndex = 0;
             this.groupBoxJsonStructurePreview.TabStop = false;
-            this.groupBoxJsonStructurePreview.Text = "Podgląd Struktury (na żywo)";
+            this.groupBoxJsonStructurePreview.Text = "Podgląd Struktury";
             // 
             // rtbJsonStructurePreview
             // 
@@ -256,6 +261,7 @@
             // 
             this.mainTabControl.Controls.Add(this.tabPageCsvPreview);
             this.mainTabControl.Controls.Add(this.tabPageJsonPreview);
+            this.mainTabControl.Controls.Add(this.tabPageYamlPreview);
             this.mainTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainTabControl.Location = new System.Drawing.Point(0, 0);
             this.mainTabControl.Name = "mainTabControl";
@@ -330,6 +336,41 @@
             this.rtbJsonPreview.Text = "";
             this.rtbJsonPreview.WordWrap = false;
             // 
+            // tabPageYamlPreview
+            // 
+            this.tabPageYamlPreview.Controls.Add(this.groupBoxYamlPreview);
+            this.tabPageYamlPreview.Location = new System.Drawing.Point(4, 22);
+            this.tabPageYamlPreview.Name = "tabPageYamlPreview";
+            this.tabPageYamlPreview.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageYamlPreview.Size = new System.Drawing.Size(722, 589);
+            this.tabPageYamlPreview.TabIndex = 2;
+            this.tabPageYamlPreview.Text = "Konfiguracja YAML";
+            this.tabPageYamlPreview.UseVisualStyleBackColor = true;
+            // 
+            // groupBoxYamlPreview
+            // 
+            this.groupBoxYamlPreview.Controls.Add(this.rtbYamlPreview);
+            this.groupBoxYamlPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBoxYamlPreview.Location = new System.Drawing.Point(3, 3);
+            this.groupBoxYamlPreview.Name = "groupBoxYamlPreview";
+            this.groupBoxYamlPreview.Padding = new System.Windows.Forms.Padding(6);
+            this.groupBoxYamlPreview.Size = new System.Drawing.Size(716, 583);
+            this.groupBoxYamlPreview.TabIndex = 0;
+            this.groupBoxYamlPreview.TabStop = false;
+            this.groupBoxYamlPreview.Text = "Podgląd Konfiguracji YAML (na żywo)";
+            // 
+            // rtbYamlPreview
+            // 
+            this.rtbYamlPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rtbYamlPreview.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.rtbYamlPreview.Location = new System.Drawing.Point(6, 19);
+            this.rtbYamlPreview.Name = "rtbYamlPreview";
+            this.rtbYamlPreview.ReadOnly = true;
+            this.rtbYamlPreview.Size = new System.Drawing.Size(704, 558);
+            this.rtbYamlPreview.TabIndex = 0;
+            this.rtbYamlPreview.Text = "";
+            this.rtbYamlPreview.WordWrap = false;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -366,6 +407,8 @@
             this.groupBoxCsvViews.ResumeLayout(false);
             this.tabPageJsonPreview.ResumeLayout(false);
             this.groupBoxJsonPreview.ResumeLayout(false);
+            this.tabPageYamlPreview.ResumeLayout(false);
+            this.groupBoxYamlPreview.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -396,5 +439,8 @@
         private System.Windows.Forms.RichTextBox rtbJsonStructurePreview;
         private System.Windows.Forms.ToolStripMenuItem mappingToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageRelationsToolStripMenuItem;
+        private System.Windows.Forms.TabPage tabPageYamlPreview;
+        private System.Windows.Forms.GroupBox groupBoxYamlPreview;
+        private System.Windows.Forms.RichTextBox rtbYamlPreview;
     }
 }
