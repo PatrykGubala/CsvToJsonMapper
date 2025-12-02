@@ -56,7 +56,7 @@ namespace CsvJsonMapper.Services
             File.WriteAllText(filePath, yaml);
         }
 
-        public (List<CsvSourceFile> Files, List<Relation> Relations, MappingNode RootNode) LoadConfiguration(string filePath)
+        public ProjectConfiguration ReadConfiguration(string filePath)
         {
             string yaml = File.ReadAllText(filePath);
 
@@ -68,8 +68,11 @@ namespace CsvJsonMapper.Services
                 .WithTagMapping("!array", typeof(MappingArray))
                 .Build();
 
-            var config = deserializer.Deserialize<ProjectConfiguration>(yaml);
+            return deserializer.Deserialize<ProjectConfiguration>(yaml);
+        }
 
+        public (List<CsvSourceFile> Files, List<Relation> Relations, MappingNode RootNode) ProcessConfiguration(ProjectConfiguration config)
+        {
             var loadedFiles = new List<CsvSourceFile>();
 
             if (config.Files != null)

@@ -46,8 +46,8 @@ namespace CsvJsonMapper.Forms
 
         private void SetupTemplateMenu()
         {
-            var saveItem = new ToolStripMenuItem("Zapisz Szablon ...", null, SaveTemplate_Click);
-            var loadItem = new ToolStripMenuItem("Wczytaj Szablon ...", null, LoadTemplate_Click);
+            var saveItem = new ToolStripMenuItem("Zapisz Szablon (YAML)...", null, SaveTemplate_Click);
+            var loadItem = new ToolStripMenuItem("Wczytaj Szablon (YAML)...", null, LoadTemplate_Click);
 
             fileToolStripMenuItem.DropDownItems.Insert(2, new ToolStripSeparator());
             fileToolStripMenuItem.DropDownItems.Insert(3, saveItem);
@@ -87,18 +87,26 @@ namespace CsvJsonMapper.Forms
                 {
                     try
                     {
-                        var result = _yamlConfigService.LoadConfiguration(ofd.FileName);
+                        var config = _yamlConfigService.ReadConfiguration(ofd.FileName);
 
-                        _loadedFiles = result.Files;
-                        _relations = result.Relations;
-                        _rootMappingNode = result.RootNode;
+                        using (var dialog = new ImportYamlConfigDialog(config))
+                        {
+                            if (dialog.ShowDialog() == DialogResult.OK)
+                            {
+                                var result = _yamlConfigService.ProcessConfiguration(config);
 
-                        UpdateSourceTreeView();
-                        UpdateCsvViewsTabControl();
-                        RebuildJsonStructureTree();
-                        UpdateJsonPreview();
+                                _loadedFiles = result.Files;
+                                _relations = result.Relations;
+                                _rootMappingNode = result.RootNode;
 
-                        lblStatus.Text = $"Wczytano konfigurację z pliku: {Path.GetFileName(ofd.FileName)}";
+                                UpdateSourceTreeView();
+                                UpdateCsvViewsTabControl();
+                                RebuildJsonStructureTree();
+                                UpdateJsonPreview();
+
+                                lblStatus.Text = $"Wczytano konfigurację z pliku: {Path.GetFileName(ofd.FileName)}";
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
