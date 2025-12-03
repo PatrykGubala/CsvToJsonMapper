@@ -86,6 +86,8 @@ namespace CsvJsonMapper.Services
 
                     var csvFile = _parsingService.LoadRawCsv(fileDef.FilePath);
 
+                    csvFile.FileName = fileDef.FileName;
+
                     csvFile.HeaderRowIndex = fileDef.HeaderRowIndex;
                     csvFile.MetadataRowIndices = fileDef.MetadataRowIndices;
                     csvFile.IsRootFile = fileDef.IsRootFile;

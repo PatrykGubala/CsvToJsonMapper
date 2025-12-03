@@ -1,13 +1,18 @@
-﻿using System.Collections.Generic;
-using System.Data;
-using System.IO;
+﻿using System.Data;
 
 namespace CsvJsonMapper.Models
 {
     public class CsvSourceFile
     {
         public string FilePath { get; set; }
-        public string FileName => Path.GetFileName(FilePath);
+        
+        private string _fileNameOverride;
+        public string FileName 
+        { 
+            get => _fileNameOverride ?? Path.GetFileName(FilePath);
+            set => _fileNameOverride = value;
+        }
+
         public string Delimiter { get; set; }
         
         public bool IsRootFile { get; set; }
