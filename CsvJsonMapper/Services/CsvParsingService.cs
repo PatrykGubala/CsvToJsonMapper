@@ -10,6 +10,40 @@ namespace CsvJsonMapper.Services
     {
         private const int PREVIEW_ROW_LIMIT = 50;
 
+        public void ValidateFileStructure(string filePath, int headerRowIndex, string delimiter = null)
+        {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"Plik nie istnieje: {filePath}");
+
+            if (new FileInfo(filePath).Length == 0)
+                throw new Exception($"Plik jest pusty: {filePath}");
+
+            string actualDelimiter = delimiter ?? DetectDelimiter(filePath);
+            if (string.IsNullOrEmpty(actualDelimiter))
+                throw new Exception($"Nie udało się wykryć separatora w pliku: {filePath}");
+
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                Delimiter = actualDelimiter,
+                HasHeaderRecord = false
+            };
+
+            using (var reader = new StreamReader(filePath))
+            using (var csv = new CsvReader(reader, config))
+            {
+                int rowCount = 0;
+                while (rowCount <= headerRowIndex)
+                {
+                    if (!csv.Read())
+                        throw new Exception($"Plik {Path.GetFileName(filePath)} ma zbyt mało wierszy, aby znaleźć nagłówek w wierszu {headerRowIndex + 1}.");
+                    rowCount++;
+                }
+
+                if (csv.Context.Parser.Record == null || csv.Context.Parser.Record.Length == 0)
+                    throw new Exception($"Wiersz nagłówkowy w pliku {Path.GetFileName(filePath)} jest pusty.");
+            }
+        }
+
         public CsvSourceFile LoadRawCsv(string filePath)
         {
             var sourceFile = new CsvSourceFile { FilePath = filePath };
@@ -77,6 +111,8 @@ namespace CsvJsonMapper.Services
             foreach (var item in headerRow.ItemArray)
             {
                 string header = item.ToString();
+                if (string.IsNullOrWhiteSpace(header)) header = "EmptyHeader";
+                
                 string uniqueHeader = header;
                 int suffix = 1;
                 while (headers.Contains(uniqueHeader))
@@ -168,4 +204,3 @@ namespace CsvJsonMapper.Services
         }
     }
 }
-

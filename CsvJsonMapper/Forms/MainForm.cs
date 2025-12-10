@@ -5,6 +5,7 @@ using CsvJsonMapper.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel;
+using System.Data;
 
 namespace CsvJsonMapper.Forms
 {
@@ -13,6 +14,7 @@ namespace CsvJsonMapper.Forms
         private List<CsvSourceFile> _loadedFiles;
         private CsvParsingService _parsingService;
         private JsonGenerationService _jsonGenerationService;
+        private JsonExportService _jsonExportService;
         private YamlConfigurationService _yamlConfigService;
         private List<Relation> _relations;
         private Font _rootNodeFont;
@@ -35,6 +37,7 @@ namespace CsvJsonMapper.Forms
             _relations = new List<Relation>();
             _parsingService = new CsvParsingService();
             _jsonGenerationService = new JsonGenerationService();
+            _jsonExportService = new JsonExportService();
             _yamlConfigService = new YamlConfigurationService(_parsingService);
             _rootNodeFont = new Font(tvSourceFiles.Font, FontStyle.Bold);
             _potentialKeyFont = new Font(tvSourceFiles.Font, FontStyle.Italic);
@@ -93,6 +96,16 @@ namespace CsvJsonMapper.Forms
                         {
                             if (dialog.ShowDialog() == DialogResult.OK)
                             {
+                                var validationErrors = _yamlConfigService.ValidateConfigurationIntegrity(config);
+                                if (validationErrors.Count > 0)
+                                {
+                                    string message = "Wykryto błędy w konfiguracji:\n\n" + string.Join("\n", validationErrors.Take(10));
+                                    if (validationErrors.Count > 10) message += "\n...i więcej.";
+                                    
+                                    MessageBox.Show(message, "Błąd Walidacji Konfiguracji", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                    return;
+                                }
+
                                 var result = _yamlConfigService.ProcessConfiguration(config);
 
                                 _loadedFiles = result.Files;
@@ -111,6 +124,45 @@ namespace CsvJsonMapper.Forms
                     catch (Exception ex)
                     {
                         MessageBox.Show($"Błąd podczas wczytywania szablonu: {ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void exportJsonToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_loadedFiles.Count == 0 || !_loadedFiles.Any(f => f.IsRootFile))
+            {
+                MessageBox.Show("Brak załadowanych plików lub nie wybrano pliku głównego (Root).", "Błąd eksportu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "Plik JSON (*.json)|*.json";
+                sfd.Title = "Eksportuj do JSON";
+                sfd.FileName = "output.json";
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        this.Cursor = Cursors.WaitCursor;
+                        lblStatus.Text = "Trwa eksportowanie danych...";
+                        
+                        _jsonExportService.ExportJson(sfd.FileName, _rootMappingNode, _loadedFiles, _relations);
+                        
+                        lblStatus.Text = "Eksport zakończony pomyślnie.";
+                        MessageBox.Show("Eksport zakończony pomyślnie!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        lblStatus.Text = "Błąd eksportu.";
+                        MessageBox.Show($"Wystąpił błąd podczas eksportu: {ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    finally
+                    {
+                        this.Cursor = Cursors.Default;
                     }
                 }
             }
@@ -299,6 +351,19 @@ namespace CsvJsonMapper.Forms
             })
             {
                 if (ofd.ShowDialog() != DialogResult.OK) return;
+
+                foreach (var file in ofd.FileNames)
+                {
+                    try
+                    {
+                        _parsingService.ValidateFileStructure(file, 0); 
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Błąd walidacji pliku {Path.GetFileName(file)}:\n{ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
 
                 using (var dialog = new ImportConfigurationDialog(ofd.FileNames, _parsingService))
                 {

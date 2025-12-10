@@ -1,11 +1,6 @@
 ﻿using CsvJsonMapper.Models;
 using CsvJsonMapper.Services;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
+
 
 namespace CsvJsonMapper.Forms.Dialogs
 {
@@ -212,6 +207,21 @@ namespace CsvJsonMapper.Forms.Dialogs
             {
                 MessageBox.Show("Musisz wybrać plik główny (Root).", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
+            }
+
+            foreach (var filePath in _filePaths)
+            {
+                var config = _fileConfigs[filePath];
+                try
+                {
+                    _parsingService.ValidateFileStructure(filePath, config.HeaderRow - 1);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Błąd walidacji dla pliku {Path.GetFileName(filePath)}:\n{ex.Message}", "Błąd Walidacji", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.DialogResult = DialogResult.None;
+                    return;
+                }
             }
 
             string rootFileName = cmbRootFile.SelectedItem.ToString();

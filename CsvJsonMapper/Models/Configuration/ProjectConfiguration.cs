@@ -7,6 +7,7 @@ namespace CsvJsonMapper.Models.Configuration
         public List<FileSourceDefinition> Files { get; set; } = new List<FileSourceDefinition>();
         public List<Relation> Relations { get; set; } = new List<Relation>();
         public MappingNode RootNode { get; set; }
+        
     }
 
     public class FileSourceDefinition

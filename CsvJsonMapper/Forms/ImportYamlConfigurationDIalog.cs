@@ -1,4 +1,5 @@
 ﻿using CsvJsonMapper.Models.Configuration;
+using CsvJsonMapper.Services;
 
 
 namespace CsvJsonMapper.Forms.Dialogs
@@ -6,6 +7,7 @@ namespace CsvJsonMapper.Forms.Dialogs
     public partial class ImportYamlConfigDialog : Form
     {
         private ProjectConfiguration _config;
+        private CsvParsingService _parsingService = new CsvParsingService();
 
         public ImportYamlConfigDialog(ProjectConfiguration config)
         {
@@ -95,8 +97,19 @@ namespace CsvJsonMapper.Forms.Dialogs
             {
                 if (!File.Exists(fileDef.FilePath))
                 {
-                    MessageBox.Show($"Plik nie istnieje: {fileDef.FilePath}\nProszę wskazać poprawną ścieżkę.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Plik nie istnieje: {fileDef.FilePath}\nProszę wskazać poprawną ścieżkę.", "Błąd walidacji", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     this.DialogResult = DialogResult.None; 
+                    return;
+                }
+
+                try
+                {
+                    _parsingService.ValidateFileStructure(fileDef.FilePath, fileDef.HeaderRowIndex);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Błąd walidacji pliku {fileDef.FileName}:\n{ex.Message}", "Błąd walidacji", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.DialogResult = DialogResult.None;
                     return;
                 }
             }
