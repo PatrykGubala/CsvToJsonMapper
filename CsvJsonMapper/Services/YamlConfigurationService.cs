@@ -148,9 +148,15 @@ namespace CsvJsonMapper.Services
                 {
                     errors.Add($"Pole '{field.Name}': Odwołuje się do nieznanego pliku '{field.SourceFileId}'.");
                 }
-                else if (!fileHeaders[field.SourceFileId].Contains(field.SourceColumnName))
+                else
                 {
-                    errors.Add($"Pole '{field.Name}': Kolumna '{field.SourceColumnName}' nie istnieje w pliku '{field.SourceFileId}'.");
+                    if (field.TransformationType != TransformationType.CombineFields)
+                    {
+                        if (!fileHeaders[field.SourceFileId].Contains(field.SourceColumnName))
+                        {
+                            errors.Add($"Pole '{field.Name}': Kolumna '{field.SourceColumnName}' nie istnieje w pliku '{field.SourceFileId}'.");
+                        }
+                    }
                 }
             }
             else if (node is IMappingContainer container)

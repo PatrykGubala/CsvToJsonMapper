@@ -3,8 +3,8 @@ using CsvHelper.Configuration;
 using CsvJsonMapper.Models;
 using CsvJsonMapper.Models.Mapping;
 using Newtonsoft.Json;
+using System.Data;
 using System.Globalization;
-
 
 namespace CsvJsonMapper.Services
 {
@@ -42,7 +42,9 @@ namespace CsvJsonMapper.Services
                         if (rootFile.MetadataRowIndices.Contains(csv.Context.Parser.Row - 1)) continue;
 
                         var rootRowDict = GetRowDictionary(csv, rootFile);
-                        WriteNode(jsonWriter, rootNode, rootRowDict, rootFile, fileConfigs, relations, relationIndexes);
+                        var dataRow = CreateDataRow(rootRowDict, rootFile);
+                        
+                        WriteNode(jsonWriter, rootNode, dataRow, rootFile, fileConfigs, relations, relationIndexes);
                     }
                 }
 
@@ -50,16 +52,30 @@ namespace CsvJsonMapper.Services
             }
         }
 
-        private Dictionary<Guid, ILookup<string, Dictionary<string, string>>> BuildRelationIndexes(List<CsvSourceFile> files, List<Relation> relations)
+        private DataRow CreateDataRow(Dictionary<string, string> rowDict, CsvSourceFile file)
         {
-            var indexes = new Dictionary<Guid, ILookup<string, Dictionary<string, string>>>();
+            var table = file.ProcessedData.Clone(); 
+            var row = table.NewRow();
+            foreach (var kvp in rowDict)
+            {
+                if (table.Columns.Contains(kvp.Key))
+                {
+                    row[kvp.Key] = kvp.Value;
+                }
+            }
+            return row;
+        }
+
+        private Dictionary<Guid, ILookup<string, DataRow>> BuildRelationIndexes(List<CsvSourceFile> files, List<Relation> relations)
+        {
+            var indexes = new Dictionary<Guid, ILookup<string, DataRow>>();
             var filesMap = files.ToDictionary(f => f.FileName, f => f);
 
             foreach (var relation in relations)
             {
                 if (!filesMap.TryGetValue(relation.ChildFileId, out var childFile)) continue;
 
-                var childRows = new List<Dictionary<string, string>>();
+                var childRows = new List<DataRow>();
                 
                 var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
@@ -76,7 +92,9 @@ namespace CsvJsonMapper.Services
                     while (csv.Read())
                     {
                         if (childFile.MetadataRowIndices.Contains(csv.Context.Parser.Row - 1)) continue;
-                        childRows.Add(GetRowDictionary(csv, childFile));
+                        
+                        var dict = GetRowDictionary(csv, childFile);
+                        childRows.Add(CreateDataRow(dict, childFile));
                     }
                 }
 
@@ -85,7 +103,7 @@ namespace CsvJsonMapper.Services
                     var keyParts = new List<string>();
                     foreach (var col in relation.ChildKeyColumns)
                     {
-                        keyParts.Add(row.ContainsKey(col) ? row[col] : "");
+                        keyParts.Add(row.Table.Columns.Contains(col) ? row[col]?.ToString() : "");
                     }
                     return string.Join("|", keyParts);
                 });
@@ -99,22 +117,22 @@ namespace CsvJsonMapper.Services
         private void WriteNode(
             JsonTextWriter writer, 
             MappingNode node, 
-            Dictionary<string, string> currentRow, 
+            DataRow currentRow, 
             CsvSourceFile currentFile,
             Dictionary<string, CsvSourceFile> filesMap,
             List<Relation> relations,
-            Dictionary<Guid, ILookup<string, Dictionary<string, string>>> indexes)
+            Dictionary<Guid, ILookup<string, DataRow>> indexes)
         {
             if (node is MappingField field)
             {
-                string value = currentRow.ContainsKey(field.SourceColumnName) ? currentRow[field.SourceColumnName] : null;
-                WriteValue(writer, value, field.SourceColumnType);
+                object value = TransformationHelper.ProcessValue(field, currentRow);
+                writer.WriteValue(value);
             }
             else if (node is MappingObject obj)
             {
                 writer.WriteStartObject();
                 
-                Dictionary<string, string> contextRow = currentRow;
+                DataRow contextRow = currentRow;
                 CsvSourceFile contextFile = currentFile;
                 bool skipChildren = false;
 
@@ -156,9 +174,8 @@ namespace CsvJsonMapper.Services
             else if (node is MappingArray arr)
             {
                 writer.WriteStartArray();
-                var templateNode = arr.Children.FirstOrDefault();
-
-                if (templateNode != null && arr.RelationId.HasValue)
+                
+                if (arr.Children.Count > 0 && arr.RelationId.HasValue)
                 {
                     if (indexes.TryGetValue(arr.RelationId.Value, out var lookup))
                     {
@@ -171,37 +188,26 @@ namespace CsvJsonMapper.Services
 
                             foreach (var childRow in childRows)
                             {
-                                WriteNode(writer, templateNode, childRow, childFile, filesMap, relations, indexes);
+                                if (arr.Children.Count == 1)
+                                {
+                                    WriteNode(writer, arr.Children[0], childRow, childFile, filesMap, relations, indexes);
+                                }
+                                else
+                                {
+                                    writer.WriteStartObject();
+                                    foreach(var child in arr.Children)
+                                    {
+                                        writer.WritePropertyName(child.Name);
+                                        WriteNode(writer, child, childRow, childFile, filesMap, relations, indexes);
+                                    }
+                                    writer.WriteEndObject();
+                                }
                             }
                         }
                     }
                 }
 
                 writer.WriteEndArray();
-            }
-        }
-
-        private void WriteValue(JsonTextWriter writer, string value, string type)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                writer.WriteNull();
-                return;
-            }
-
-            switch (type)
-            {
-                case "int":
-                    if (int.TryParse(value, out int iVal)) writer.WriteValue(iVal);
-                    else writer.WriteNull();
-                    break;
-                case "double":
-                    if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double dVal)) writer.WriteValue(dVal);
-                    else writer.WriteNull();
-                    break;
-                default:
-                    writer.WriteValue(value);
-                    break;
             }
         }
 
@@ -234,12 +240,12 @@ namespace CsvJsonMapper.Services
             return dict;
         }
 
-        private string GetCompositeKey(Dictionary<string, string> row, List<string> columns)
+        private string GetCompositeKey(DataRow row, List<string> columns)
         {
             var parts = new List<string>();
             foreach(var col in columns)
             {
-                parts.Add(row.ContainsKey(col) ? row[col] : "");
+                parts.Add(row.Table.Columns.Contains(col) ? row[col]?.ToString() : "");
             }
             return string.Join("|", parts);
         }

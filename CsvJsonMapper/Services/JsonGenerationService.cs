@@ -2,7 +2,6 @@
 using CsvJsonMapper.Models.Mapping;
 using Newtonsoft.Json.Linq;
 using System.Data;
-using System.Globalization;
 
 namespace CsvJsonMapper.Services
 {
@@ -49,12 +48,8 @@ namespace CsvJsonMapper.Services
 
             if (node is MappingField field)
             {
-                if (!currentRow.Table.Columns.Contains(field.SourceColumnName))
-                {
-                    throw new Exception($"Błąd mapowania: Kolumna '{field.SourceColumnName}' nie istnieje w pliku '{currentFile.FileName}'.");
-                }
-                string value = currentRow[field.SourceColumnName]?.ToString();
-                return ConvertValue(value, field.SourceColumnType);
+                object value = TransformationHelper.ProcessValue(field, currentRow);
+                return value == null ? JValue.CreateNull() : new JValue(value);
             }
 
             if (node is MappingObject obj)
@@ -109,42 +104,32 @@ namespace CsvJsonMapper.Services
                 }
 
                 var jArr = new JArray();
-                var templateNode = arr.Children.FirstOrDefault();
-                if (templateNode == null)
-                {
-                    return jArr;
-                }
+                
+                if (arr.Children.Count == 0) return jArr;
 
                 List<DataRow> childRows = FindMatchingRows(currentRow, currentFile, childFile, relation);
+                
                 foreach (DataRow childRow in childRows)
                 {
-                    jArr.Add(BuildNode(templateNode, childRow, childFile, fileMap, relationMap));
+                    if (arr.Children.Count == 1)
+                    {
+                        jArr.Add(BuildNode(arr.Children[0], childRow, childFile, fileMap, relationMap));
+                    }
+                    else
+                    {
+                        var compositeObj = new JObject();
+                        foreach (var child in arr.Children)
+                        {
+                            var token = BuildNode(child, childRow, childFile, fileMap, relationMap);
+                            compositeObj.Add(child.Name, token);
+                        }
+                        jArr.Add(compositeObj);
+                    }
                 }
                 return jArr;
             }
 
             return null;
-        }
-
-        private JToken ConvertValue(string value, string type)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return JValue.CreateNull();
-            }
-
-            switch (type)
-            {
-                case "int":
-                    if (int.TryParse(value, out int intVal)) return new JValue(intVal);
-                    return JValue.CreateNull();
-                case "double":
-                    if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double doubleVal)) return new JValue(doubleVal);
-                    return JValue.CreateNull();
-                case "string":
-                default:
-                    return new JValue(value);
-            }
         }
 
         private DataRow FindMatchingRow(DataRow parentRow, CsvSourceFile parentFile, CsvSourceFile childFile, Relation relation)
@@ -160,7 +145,7 @@ namespace CsvJsonMapper.Services
                         string pkValue = parentRow[pkCol]?.ToString().Trim();
                         string fkValue = childRow[fkCol]?.ToString().Trim();
 
-                        if (pkValue != fkValue)
+                        if (!string.Equals(pkValue, fkValue, StringComparison.OrdinalIgnoreCase))
                         {
                             return false;
                         }
@@ -182,7 +167,7 @@ namespace CsvJsonMapper.Services
                         string pkValue = parentRow[pkCol]?.ToString().Trim();
                         string fkValue = childRow[fkCol]?.ToString().Trim();
 
-                        if (pkValue != fkValue)
+                        if (!string.Equals(pkValue, fkValue, StringComparison.OrdinalIgnoreCase))
                         {
                             return false;
                         }

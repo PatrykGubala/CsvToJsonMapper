@@ -30,7 +30,9 @@
             this.tvSourceFiles = new System.Windows.Forms.TreeView();
             this.groupBoxJsonTemplate = new System.Windows.Forms.GroupBox();
             this.structurePreviewSplitter = new System.Windows.Forms.SplitContainer();
+            this.treePropertySplitter = new System.Windows.Forms.SplitContainer();
             this.tvJsonStructure = new System.Windows.Forms.TreeView();
+            this.propertyGridNodeDetails = new System.Windows.Forms.PropertyGrid();
             this.groupBoxJsonStructurePreview = new System.Windows.Forms.GroupBox();
             this.rtbJsonStructurePreview = new System.Windows.Forms.RichTextBox();
             this.mainTabControl = new System.Windows.Forms.TabControl();
@@ -59,6 +61,10 @@
             this.structurePreviewSplitter.Panel1.SuspendLayout();
             this.structurePreviewSplitter.Panel2.SuspendLayout();
             this.structurePreviewSplitter.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.treePropertySplitter)).BeginInit();
+            this.treePropertySplitter.Panel1.SuspendLayout();
+            this.treePropertySplitter.Panel2.SuspendLayout();
+            this.treePropertySplitter.SuspendLayout();
             this.groupBoxJsonStructurePreview.SuspendLayout();
             this.mainTabControl.SuspendLayout();
             this.tabPageCsvPreview.SuspendLayout();
@@ -172,7 +178,7 @@
             // 
             this.leftPanelSplitContainer.Panel2.Controls.Add(this.groupBoxJsonTemplate);
             this.leftPanelSplitContainer.Size = new System.Drawing.Size(450, 615);
-            this.leftPanelSplitContainer.SplitterDistance = 300;
+            this.leftPanelSplitContainer.SplitterDistance = 170;
             this.leftPanelSplitContainer.TabIndex = 0;
             // 
             // groupBox1
@@ -182,7 +188,7 @@
             this.groupBox1.Location = new System.Drawing.Point(0, 0);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(6);
-            this.groupBox1.Size = new System.Drawing.Size(450, 300);
+            this.groupBox1.Size = new System.Drawing.Size(450, 250);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Źródła danych CSV";
@@ -192,7 +198,7 @@
             this.tvSourceFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tvSourceFiles.Location = new System.Drawing.Point(6, 19);
             this.tvSourceFiles.Name = "tvSourceFiles";
-            this.tvSourceFiles.Size = new System.Drawing.Size(438, 275);
+            this.tvSourceFiles.Size = new System.Drawing.Size(438, 225);
             this.tvSourceFiles.TabIndex = 0;
             // 
             // groupBoxJsonTemplate
@@ -202,10 +208,10 @@
             this.groupBoxJsonTemplate.Location = new System.Drawing.Point(0, 0);
             this.groupBoxJsonTemplate.Name = "groupBoxJsonTemplate";
             this.groupBoxJsonTemplate.Padding = new System.Windows.Forms.Padding(6);
-            this.groupBoxJsonTemplate.Size = new System.Drawing.Size(450, 311);
+            this.groupBoxJsonTemplate.Size = new System.Drawing.Size(450, 361);
             this.groupBoxJsonTemplate.TabIndex = 0;
             this.groupBoxJsonTemplate.TabStop = false;
-            this.groupBoxJsonTemplate.Text = "Struktura JSON";
+            this.groupBoxJsonTemplate.Text = "Struktura JSON i Właściwości";
             // 
             // structurePreviewSplitter
             // 
@@ -216,14 +222,32 @@
             // 
             // structurePreviewSplitter.Panel1
             // 
-            this.structurePreviewSplitter.Panel1.Controls.Add(this.tvJsonStructure);
+            this.structurePreviewSplitter.Panel1.Controls.Add(this.treePropertySplitter);
             // 
             // structurePreviewSplitter.Panel2
             // 
             this.structurePreviewSplitter.Panel2.Controls.Add(this.groupBoxJsonStructurePreview);
-            this.structurePreviewSplitter.Size = new System.Drawing.Size(438, 286);
-            this.structurePreviewSplitter.SplitterDistance = 140;
+            this.structurePreviewSplitter.Size = new System.Drawing.Size(438, 336);
+            this.structurePreviewSplitter.SplitterDistance = 230;
             this.structurePreviewSplitter.TabIndex = 1;
+            // 
+            // treePropertySplitter
+            // 
+            this.treePropertySplitter.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treePropertySplitter.Location = new System.Drawing.Point(0, 0);
+            this.treePropertySplitter.Name = "treePropertySplitter";
+            this.treePropertySplitter.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // treePropertySplitter.Panel1
+            // 
+            this.treePropertySplitter.Panel1.Controls.Add(this.tvJsonStructure);
+            // 
+            // treePropertySplitter.Panel2
+            // 
+            this.treePropertySplitter.Panel2.Controls.Add(this.propertyGridNodeDetails);
+            this.treePropertySplitter.Size = new System.Drawing.Size(438, 230);
+            this.treePropertySplitter.SplitterDistance = 140;
+            this.treePropertySplitter.TabIndex = 0;
             // 
             // tvJsonStructure
             // 
@@ -233,6 +257,16 @@
             this.tvJsonStructure.Size = new System.Drawing.Size(438, 140);
             this.tvJsonStructure.TabIndex = 0;
             // 
+            // propertyGridNodeDetails
+            // 
+            this.propertyGridNodeDetails.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.propertyGridNodeDetails.HelpVisible = false;
+            this.propertyGridNodeDetails.Location = new System.Drawing.Point(0, 0);
+            this.propertyGridNodeDetails.Name = "propertyGridNodeDetails";
+            this.propertyGridNodeDetails.Size = new System.Drawing.Size(438, 86);
+            this.propertyGridNodeDetails.TabIndex = 0;
+            this.propertyGridNodeDetails.ToolbarVisible = false;
+            // 
             // groupBoxJsonStructurePreview
             // 
             this.groupBoxJsonStructurePreview.Controls.Add(this.rtbJsonStructurePreview);
@@ -240,7 +274,7 @@
             this.groupBoxJsonStructurePreview.Location = new System.Drawing.Point(0, 0);
             this.groupBoxJsonStructurePreview.Name = "groupBoxJsonStructurePreview";
             this.groupBoxJsonStructurePreview.Padding = new System.Windows.Forms.Padding(6);
-            this.groupBoxJsonStructurePreview.Size = new System.Drawing.Size(438, 142);
+            this.groupBoxJsonStructurePreview.Size = new System.Drawing.Size(438, 102);
             this.groupBoxJsonStructurePreview.TabIndex = 0;
             this.groupBoxJsonStructurePreview.TabStop = false;
             this.groupBoxJsonStructurePreview.Text = "Podgląd Struktury";
@@ -252,7 +286,7 @@
             this.rtbJsonStructurePreview.Location = new System.Drawing.Point(6, 19);
             this.rtbJsonStructurePreview.Name = "rtbJsonStructurePreview";
             this.rtbJsonStructurePreview.ReadOnly = true;
-            this.rtbJsonStructurePreview.Size = new System.Drawing.Size(426, 117);
+            this.rtbJsonStructurePreview.Size = new System.Drawing.Size(426, 77);
             this.rtbJsonStructurePreview.TabIndex = 0;
             this.rtbJsonStructurePreview.Text = "";
             this.rtbJsonStructurePreview.WordWrap = false;
@@ -375,7 +409,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1184, 661);
+            this.ClientSize = new System.Drawing.Size(1280, 800);
             this.Controls.Add(this.mainSplitContainer);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
@@ -401,6 +435,10 @@
             this.structurePreviewSplitter.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.structurePreviewSplitter)).EndInit();
             this.structurePreviewSplitter.ResumeLayout(false);
+            this.treePropertySplitter.Panel1.ResumeLayout(false);
+            this.treePropertySplitter.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.treePropertySplitter)).EndInit();
+            this.treePropertySplitter.ResumeLayout(false);
             this.groupBoxJsonStructurePreview.ResumeLayout(false);
             this.mainTabControl.ResumeLayout(false);
             this.tabPageCsvPreview.ResumeLayout(false);
@@ -442,5 +480,7 @@
         private System.Windows.Forms.TabPage tabPageYamlPreview;
         private System.Windows.Forms.GroupBox groupBoxYamlPreview;
         private System.Windows.Forms.RichTextBox rtbYamlPreview;
+        private System.Windows.Forms.SplitContainer treePropertySplitter;
+        private System.Windows.Forms.PropertyGrid propertyGridNodeDetails;
     }
 }

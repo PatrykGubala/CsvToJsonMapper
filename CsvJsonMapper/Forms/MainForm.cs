@@ -5,7 +5,6 @@ using CsvJsonMapper.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel;
-using System.Data;
 
 namespace CsvJsonMapper.Forms
 {
@@ -27,6 +26,7 @@ namespace CsvJsonMapper.Forms
 
         private ToolStripMenuItem _menuAddObject;
         private ToolStripMenuItem _menuAddArray;
+        private ToolStripMenuItem _menuAddField; 
         private ToolStripMenuItem _menuRenameNode;
         private ToolStripMenuItem _menuDeleteNode;
 
@@ -45,6 +45,9 @@ namespace CsvJsonMapper.Forms
             InitializeDragDropAndContextMenus();
             InitializeJsonCreator();
             SetupTemplateMenu();
+
+            tvJsonStructure.AfterSelect += tvJsonStructure_AfterSelect;
+            propertyGridNodeDetails.PropertyValueChanged += propertyGridNodeDetails_PropertyValueChanged;
         }
 
         private void SetupTemplateMenu()
@@ -173,6 +176,7 @@ namespace CsvJsonMapper.Forms
             _jsonStructureContextMenu = new ContextMenuStrip();
             _menuAddObject = new ToolStripMenuItem("Dodaj Obiekt ({} )");
             _menuAddArray = new ToolStripMenuItem("Dodaj Tablicę ([])");
+            _menuAddField = new ToolStripMenuItem("Dodaj Pole (Wartość)", null, menuAddField_Click); 
             _menuRenameNode = new ToolStripMenuItem("Zmień nazwę");
             _menuDeleteNode = new ToolStripMenuItem("Usuń");
 
@@ -188,6 +192,7 @@ namespace CsvJsonMapper.Forms
             _menuDeleteNode.Click += menuDeleteNode_Click;
 
             _jsonStructureContextMenu.Items.AddRange(new ToolStripItem[] {
+                _menuAddField,
                 _menuAddObject,
                 _menuAddArray,
                 new ToolStripSeparator(),
@@ -273,7 +278,24 @@ namespace CsvJsonMapper.Forms
                 string relInfo = rel != null ? $" (Rel: {rel.Name})" : "";
                 return $"{node.Name} (tablica){relInfo}";
             }
-            if (node is MappingField field) return $"{field.SourceColumnName} ({field.SourceColumnType}): \"{field.Name}\"";
+            if (node is MappingField field)
+            {
+                string transformInfo = "";
+                if (field.TransformationType != TransformationType.None)
+                {
+                    transformInfo = $" [{field.TransformationType}]";
+                    if (field.TransformationType == TransformationType.CombineFields)
+                    {
+                         transformInfo += $" Pattern:'{field.TransformationPattern}'";
+                    }
+                    else if (field.TransformationType == TransformationType.SplitBySeparator || field.TransformationType == TransformationType.SplitByRegex)
+                    {
+                        transformInfo += $" Idx:{field.SplitIndex}";
+                    }
+                }
+                string srcCol = string.IsNullOrEmpty(field.SourceColumnName) ? "*" : field.SourceColumnName;
+                return $"{srcCol} ({field.SourceColumnType}){transformInfo}: \"{field.Name}\"";
+            }
             return node.Name;
         }
 
@@ -601,9 +623,28 @@ namespace CsvJsonMapper.Forms
             _menuRenameNode.Enabled = !isRoot;
             _menuDeleteNode.Enabled = !isRoot;
 
-            bool canAddRelation = (selectedNode != null && selectedNode.Tag is IMappingContainer);
-            _menuAddObject.DropDownItems[1].Enabled = canAddRelation && _relations.Any(r => r.Type == RelationType.OneToOne);
-            _menuAddArray.DropDownItems[1].Enabled = canAddRelation && _relations.Any(r => r.Type == RelationType.OneToMany);
+            bool isContainer = (selectedNode != null && selectedNode.Tag is IMappingContainer);
+            _menuAddField.Enabled = isContainer;
+            _menuAddObject.Enabled = isContainer;
+            _menuAddArray.Enabled = isContainer;
+
+            _menuAddObject.DropDownItems[1].Enabled = isContainer && _relations.Any(r => r.Type == RelationType.OneToOne);
+            _menuAddArray.DropDownItems[1].Enabled = isContainer && _relations.Any(r => r.Type == RelationType.OneToMany);
+        }
+
+        private void menuAddField_Click(object sender, EventArgs e)
+        {
+            string defaultFileId = "";
+            var rootFile = _loadedFiles.FirstOrDefault(f => f.IsRootFile);
+            if (rootFile != null) defaultFileId = rootFile.FileName;
+
+            AddMappingNode(new MappingField 
+            { 
+                Name = $"nowePole{_newNodeCounter++}",
+                SourceFileId = defaultFileId,
+                SourceColumnName = "",
+                TransformationType = TransformationType.None
+            });
         }
 
         private void menuAddObject_Click(object sender, EventArgs e)
@@ -802,6 +843,29 @@ namespace CsvJsonMapper.Forms
             {
                 dialog.ShowDialog();
                 UpdateJsonPreview(); 
+            }
+        }
+
+        private void tvJsonStructure_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (propertyGridNodeDetails == null) return;
+
+            if (e.Node.Tag is MappingNode node)
+            {
+                propertyGridNodeDetails.SelectedObject = node;
+            }
+            else
+            {
+                propertyGridNodeDetails.SelectedObject = null;
+            }
+        }
+
+        private void propertyGridNodeDetails_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
+            if (tvJsonStructure.SelectedNode != null && tvJsonStructure.SelectedNode.Tag is MappingNode node)
+            {
+                tvJsonStructure.SelectedNode.Text = GetNodeText(node);
+                UpdateJsonPreview();
             }
         }
     }
