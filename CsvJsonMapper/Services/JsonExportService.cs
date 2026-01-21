@@ -10,7 +10,7 @@ namespace CsvJsonMapper.Services
 {
     public class JsonExportService
     {
-        public void ExportJson(string outputPath, MappingNode rootNode, List<CsvSourceFile> files, List<Relation> relations)
+        public void ExportJson(string outputPath, MappingNode rootNode, List<CsvSourceFile> files, List<Relation> relations, bool includeNullValues)
         {
             var rootFile = files.FirstOrDefault(f => f.IsRootFile);
             if (rootFile == null) throw new Exception("Nie zdefiniowano pliku głównego (Root).");
@@ -44,7 +44,7 @@ namespace CsvJsonMapper.Services
                         var rootRowDict = GetRowDictionary(csv, rootFile);
                         var dataRow = CreateDataRow(rootRowDict, rootFile);
                         
-                        WriteNode(jsonWriter, rootNode, dataRow, rootFile, fileConfigs, relations, relationIndexes);
+                        WriteNode(jsonWriter, rootNode, dataRow, rootFile, fileConfigs, relations, relationIndexes, includeNullValues);
                     }
                 }
 
@@ -121,15 +121,32 @@ namespace CsvJsonMapper.Services
             CsvSourceFile currentFile,
             Dictionary<string, CsvSourceFile> filesMap,
             List<Relation> relations,
-            Dictionary<Guid, ILookup<string, DataRow>> indexes)
+            Dictionary<Guid, ILookup<string, DataRow>> indexes,
+            bool includeNullValues,
+            string propertyName = null)
         {
             if (node is MappingField field)
             {
                 object value = TransformationHelper.ProcessValue(field, currentRow);
+                
+                if (value == null && !includeNullValues && propertyName != null)
+                {
+                    return;
+                }
+
+                if (propertyName != null)
+                {
+                    writer.WritePropertyName(propertyName);
+                }
                 writer.WriteValue(value);
             }
             else if (node is MappingObject obj)
             {
+                if (propertyName != null)
+                {
+                    writer.WritePropertyName(propertyName);
+                }
+
                 writer.WriteStartObject();
                 
                 DataRow contextRow = currentRow;
@@ -164,8 +181,7 @@ namespace CsvJsonMapper.Services
                 {
                     foreach (var child in obj.Children)
                     {
-                        writer.WritePropertyName(child.Name);
-                        WriteNode(writer, child, contextRow, contextFile, filesMap, relations, indexes);
+                        WriteNode(writer, child, contextRow, contextFile, filesMap, relations, indexes, includeNullValues, child.Name);
                     }
                 }
 
@@ -173,6 +189,11 @@ namespace CsvJsonMapper.Services
             }
             else if (node is MappingArray arr)
             {
+                if (propertyName != null)
+                {
+                    writer.WritePropertyName(propertyName);
+                }
+
                 writer.WriteStartArray();
                 
                 if (arr.Children.Count > 0 && arr.RelationId.HasValue)
@@ -190,15 +211,14 @@ namespace CsvJsonMapper.Services
                             {
                                 if (arr.Children.Count == 1)
                                 {
-                                    WriteNode(writer, arr.Children[0], childRow, childFile, filesMap, relations, indexes);
+                                    WriteNode(writer, arr.Children[0], childRow, childFile, filesMap, relations, indexes, includeNullValues, null);
                                 }
                                 else
                                 {
                                     writer.WriteStartObject();
                                     foreach(var child in arr.Children)
                                     {
-                                        writer.WritePropertyName(child.Name);
-                                        WriteNode(writer, child, childRow, childFile, filesMap, relations, indexes);
+                                        WriteNode(writer, child, childRow, childFile, filesMap, relations, indexes, includeNullValues, child.Name);
                                     }
                                     writer.WriteEndObject();
                                 }

@@ -18,12 +18,13 @@ namespace CsvJsonMapper.Services
             _parsingService = parsingService;
         }
 
-        public string GetConfigurationYaml(List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode)
+        public string GetConfigurationYaml(List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode, bool includeNullValues)
         {
             var config = new ProjectConfiguration
             {
                 Relations = relations,
-                RootNode = rootNode
+                RootNode = rootNode,
+                IncludeNullValues = includeNullValues
             };
 
             if (files != null)
@@ -53,9 +54,9 @@ namespace CsvJsonMapper.Services
             return serializer.Serialize(config);
         }
 
-        public void SaveConfiguration(string filePath, List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode)
+        public void SaveConfiguration(string filePath, List<CsvSourceFile> files, List<Relation> relations, MappingNode rootNode, bool includeNullValues)
         {
-            string yaml = GetConfigurationYaml(files, relations, rootNode);
+            string yaml = GetConfigurationYaml(files, relations, rootNode, includeNullValues);
             File.WriteAllText(filePath, yaml);
         }
 
@@ -211,7 +212,7 @@ namespace CsvJsonMapper.Services
                 .FirstOrDefault();
         }
 
-        public (List<CsvSourceFile> Files, List<Relation> Relations, MappingNode RootNode) ProcessConfiguration(ProjectConfiguration config)
+        public (List<CsvSourceFile> Files, List<Relation> Relations, MappingNode RootNode, bool IncludeNullValues) ProcessConfiguration(ProjectConfiguration config)
         {
             var loadedFiles = new List<CsvSourceFile>();
 
@@ -252,8 +253,9 @@ namespace CsvJsonMapper.Services
 
             var relations = config.Relations ?? new List<Relation>();
             var rootNode = config.RootNode ?? new MappingObject { Name = "root" };
+            var includeNullValues = config.IncludeNullValues;
 
-            return (loadedFiles, relations, rootNode);
+            return (loadedFiles, relations, rootNode, includeNullValues);
         }
     }
 }

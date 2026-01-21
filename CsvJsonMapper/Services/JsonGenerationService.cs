@@ -7,7 +7,7 @@ namespace CsvJsonMapper.Services
 {
     public class JsonGenerationService
     {
-        public string GeneratePreviewJson(MappingNode rootNode, List<CsvSourceFile> files, List<Relation> relations)
+        public string GeneratePreviewJson(MappingNode rootNode, List<CsvSourceFile> files, List<Relation> relations, bool includeNullValues)
         {
             var rootFile = files.FirstOrDefault(f => f.IsRootFile);
             if (rootNode == null || rootFile == null || rootFile.ProcessedData.Rows.Count == 0)
@@ -28,8 +28,11 @@ namespace CsvJsonMapper.Services
             {
                 foreach (DataRow rootRow in rootFile.ProcessedData.Rows)
                 {
-                    JToken rowToken = BuildNode(rootObject, rootRow, rootFile, fileMap, relationMap);
-                    jArray.Add(rowToken);
+                    JToken rowToken = BuildNode(rootObject, rootRow, rootFile, fileMap, relationMap, includeNullValues);
+                    if (rowToken != null)
+                    {
+                        jArray.Add(rowToken);
+                    }
                 }
                 return jArray.ToString(Newtonsoft.Json.Formatting.Indented);
             }
@@ -39,7 +42,7 @@ namespace CsvJsonMapper.Services
             }
         }
 
-        private JToken BuildNode(MappingNode node, DataRow currentRow, CsvSourceFile currentFile, Dictionary<string, CsvSourceFile> fileMap, Dictionary<Guid, Relation> relationMap)
+        private JToken BuildNode(MappingNode node, DataRow currentRow, CsvSourceFile currentFile, Dictionary<string, CsvSourceFile> fileMap, Dictionary<Guid, Relation> relationMap, bool includeNullValues)
         {
             if (node == null)
             {
@@ -83,7 +86,14 @@ namespace CsvJsonMapper.Services
 
                 foreach (var child in obj.Children)
                 {
-                    jObj.Add(child.Name, BuildNode(child, contextRow, contextFile, fileMap, relationMap));
+                    var childToken = BuildNode(child, contextRow, contextFile, fileMap, relationMap, includeNullValues);
+                    
+                    if (!includeNullValues && (childToken == null || childToken.Type == JTokenType.Null))
+                    {
+                        continue;
+                    }
+
+                    jObj.Add(child.Name, childToken);
                 }
                 return jObj;
             }
@@ -113,14 +123,20 @@ namespace CsvJsonMapper.Services
                 {
                     if (arr.Children.Count == 1)
                     {
-                        jArr.Add(BuildNode(arr.Children[0], childRow, childFile, fileMap, relationMap));
+                        jArr.Add(BuildNode(arr.Children[0], childRow, childFile, fileMap, relationMap, includeNullValues));
                     }
                     else
                     {
                         var compositeObj = new JObject();
                         foreach (var child in arr.Children)
                         {
-                            var token = BuildNode(child, childRow, childFile, fileMap, relationMap);
+                            var token = BuildNode(child, childRow, childFile, fileMap, relationMap, includeNullValues);
+                            
+                            if (!includeNullValues && (token == null || token.Type == JTokenType.Null))
+                            {
+                                continue;
+                            }
+                            
                             compositeObj.Add(child.Name, token);
                         }
                         jArr.Add(compositeObj);

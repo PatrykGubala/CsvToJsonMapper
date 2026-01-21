@@ -18,10 +18,12 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openCsvToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportJsonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mappingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageRelationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.includeNullValuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.mainSplitContainer = new System.Windows.Forms.SplitContainer();
@@ -90,6 +92,7 @@
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openCsvToolStripMenuItem,
+            this.exportJsonToolStripMenuItem,
             this.toolStripSeparator1,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -102,6 +105,13 @@
             this.openCsvToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openCsvToolStripMenuItem.Text = "Importuj pliki CSV...";
             this.openCsvToolStripMenuItem.Click += new System.EventHandler(this.openCsvToolStripMenuItem_Click);
+            // 
+            // exportJsonToolStripMenuItem
+            // 
+            this.exportJsonToolStripMenuItem.Name = "exportJsonToolStripMenuItem";
+            this.exportJsonToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportJsonToolStripMenuItem.Text = "Eksportuj JSON...";
+            this.exportJsonToolStripMenuItem.Click += new System.EventHandler(this.exportJsonToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
@@ -118,7 +128,8 @@
             // mappingToolStripMenuItem
             // 
             this.mappingToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.manageRelationsToolStripMenuItem});
+            this.manageRelationsToolStripMenuItem,
+            this.includeNullValuesToolStripMenuItem});
             this.mappingToolStripMenuItem.Name = "mappingToolStripMenuItem";
             this.mappingToolStripMenuItem.Size = new System.Drawing.Size(81, 20);
             this.mappingToolStripMenuItem.Text = "Mapowanie";
@@ -126,9 +137,16 @@
             // manageRelationsToolStripMenuItem
             // 
             this.manageRelationsToolStripMenuItem.Name = "manageRelationsToolStripMenuItem";
-            this.manageRelationsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.manageRelationsToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
             this.manageRelationsToolStripMenuItem.Text = "Zarządzaj Relacjami...";
             this.manageRelationsToolStripMenuItem.Click += new System.EventHandler(this.manageRelationsToolStripMenuItem_Click);
+            // 
+            // includeNullValuesToolStripMenuItem
+            // 
+            this.includeNullValuesToolStripMenuItem.CheckOnClick = true;
+            this.includeNullValuesToolStripMenuItem.Name = "includeNullValuesToolStripMenuItem";
+            this.includeNullValuesToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.includeNullValuesToolStripMenuItem.Text = "Dołącz wartości Null";
             // 
             // statusStrip1
             // 
@@ -455,6 +473,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openCsvToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exportJsonToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip1;
@@ -477,6 +496,7 @@
         private System.Windows.Forms.RichTextBox rtbJsonStructurePreview;
         private System.Windows.Forms.ToolStripMenuItem mappingToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageRelationsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem includeNullValuesToolStripMenuItem;
         private System.Windows.Forms.TabPage tabPageYamlPreview;
         private System.Windows.Forms.GroupBox groupBoxYamlPreview;
         private System.Windows.Forms.RichTextBox rtbYamlPreview;

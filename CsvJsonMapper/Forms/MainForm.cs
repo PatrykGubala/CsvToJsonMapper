@@ -48,6 +48,12 @@ namespace CsvJsonMapper.Forms
 
             tvJsonStructure.AfterSelect += tvJsonStructure_AfterSelect;
             propertyGridNodeDetails.PropertyValueChanged += propertyGridNodeDetails_PropertyValueChanged;
+            includeNullValuesToolStripMenuItem.Click += includeNullValuesToolStripMenuItem_Click;
+        }
+
+        private void includeNullValuesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UpdateJsonPreview();
         }
 
         private void SetupTemplateMenu()
@@ -71,7 +77,7 @@ namespace CsvJsonMapper.Forms
                 {
                     try
                     {
-                        _yamlConfigService.SaveConfiguration(sfd.FileName, _loadedFiles, _relations, _rootMappingNode);
+                        _yamlConfigService.SaveConfiguration(sfd.FileName, _loadedFiles, _relations, _rootMappingNode, includeNullValuesToolStripMenuItem.Checked);
                         MessageBox.Show("Szablon został zapisany pomyślnie.", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
@@ -114,6 +120,7 @@ namespace CsvJsonMapper.Forms
                                 _loadedFiles = result.Files;
                                 _relations = result.Relations;
                                 _rootMappingNode = result.RootNode;
+                                includeNullValuesToolStripMenuItem.Checked = result.IncludeNullValues;
 
                                 UpdateSourceTreeView();
                                 UpdateCsvViewsTabControl();
@@ -153,7 +160,7 @@ namespace CsvJsonMapper.Forms
                         this.Cursor = Cursors.WaitCursor;
                         lblStatus.Text = "Trwa eksportowanie danych...";
                         
-                        _jsonExportService.ExportJson(sfd.FileName, _rootMappingNode, _loadedFiles, _relations);
+                        _jsonExportService.ExportJson(sfd.FileName, _rootMappingNode, _loadedFiles, _relations, includeNullValuesToolStripMenuItem.Checked);
                         
                         lblStatus.Text = "Eksport zakończony pomyślnie.";
                         MessageBox.Show("Eksport zakończony pomyślnie!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -551,11 +558,12 @@ namespace CsvJsonMapper.Forms
                 string jsonData = _jsonGenerationService.GeneratePreviewJson(
                     _rootMappingNode,
                     _loadedFiles,
-                    _relations
+                    _relations,
+                    includeNullValuesToolStripMenuItem.Checked
                 );
                 rtbJsonPreview.Text = jsonData;
                 
-                rtbYamlPreview.Text = _yamlConfigService.GetConfigurationYaml(_loadedFiles, _relations, _rootMappingNode);
+                rtbYamlPreview.Text = _yamlConfigService.GetConfigurationYaml(_loadedFiles, _relations, _rootMappingNode, includeNullValuesToolStripMenuItem.Checked);
             }
             catch (Exception ex)
             {

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace CsvJsonMapper.Forms.Dialogs
+﻿namespace CsvJsonMapper.Forms.Dialogs
 {
     public partial class InputBoxDialog : Form
     {
